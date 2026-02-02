@@ -2,7 +2,7 @@ import { TextareaHTMLAttributes } from "react";
 
 export type InputStatus = "default" | "error";
 
-export interface TextAreaProps
+export interface TextareaProps
   extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string; //라벨 텍스트
   status?: InputStatus; //컴포넌트의 시각적 상태
