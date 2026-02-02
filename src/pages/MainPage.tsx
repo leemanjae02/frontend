@@ -1,8 +1,10 @@
 import styled from "styled-components";
 
-export default function HomePage() {
-  return <Container>홈페이지임당(없을수도)</Container>;
-}
+const MainPage = () => {
+  return <Container>MainPage</Container>;
+};
+
+export default MainPage;
 
 const Container = styled.div`
   display: flex;
