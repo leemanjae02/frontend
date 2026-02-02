@@ -1,42 +1,45 @@
+:root {
+  --font-sans:
+    Pretendard, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR",
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+  --color-error: #d12923;
+
+  --color-orange-500: #ff8e2b;
+  --color-pink-500: #fa57c9;
+  --color-blue-500: #376dff;
+
+  --color-primary-50: #eaf6f1;
+  --color-primary-100: #d4eee3;
+  --color-primary-200: #aaddc6;
+  --color-primary-300: #7fcbaa;
+  --color-primary-400: #55ba8d;
+  --color-primary-500: #2aa971;
+  --color-primary-600: #269866;
+  --color-primary-700: #22875a;
+
+  --color-white: #ffffff;
+  --color-gray-100: #e7e7e7;
+  --color-gray-200: #b8b8b8;
+  --color-gray-300: #a0a0a0;
+  --color-gray-400: #7c7c7c;
+  --color-gray-500: #585858;
+  --color-gray-600: #414141;
+  --color-gray-700: #353535;
+  --color-gray-800: #292929;
+  --color-gray-900: #1d1d1d;
+  --color-black: #111111;
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  font-family: var(--font-sans);
 }
