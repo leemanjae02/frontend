@@ -1,8 +1,21 @@
 import { forwardRef, useState, useId } from "react";
+import type { TextareaHTMLAttributes } from "react";
 import styled, { css } from "styled-components";
 import { typography } from "../styles/typography";
-import { colors } from "../styles/colors";
-import type { TextareaProps, InputStatus } from "../@types/TextareaType";
+import type { InputStatus } from "../@types/InputStatus";
+import CharacterCount from "./CharacterCount";
+
+type CountPosition = "top" | "bottom";
+
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string; // 텍스트 영역 라벨
+  status?: InputStatus;
+  helperText?: string; // 텍스트 영역 하단 도움말 텍스트
+  showCount?: boolean; // 텍스트 영역 글자 수 표시 여부
+  countPosition?: CountPosition; // 텍스트 영역 글자 수 표시 위치
+  value: string | number; // 텍스트 영역 값
+  disabled?: boolean; // 텍스트 영역 비활성화 여부
+}
 
 const TextareaContainer = styled.div<{
   $status: InputStatus;
@@ -16,13 +29,13 @@ const TextareaContainer = styled.div<{
   padding: 10px 12px;
   border-radius: 4px;
   background-color: ${({ $disabled }) =>
-    $disabled ? colors.gray100 : colors.white};
+    $disabled ? "var(--color-gray-100)" : "var(--color-white)"};
   border: 1px solid
     ${({ $status, $isFocused, $disabled }) => {
-      if ($disabled) return colors.gray200;
-      if ($status === "error") return colors.error;
-      if ($isFocused) return colors.primary500;
-      return colors.gray200;
+      if ($disabled) return "var(--color-gray-200)";
+      if ($status === "error") return "var(--color-error)";
+      if ($isFocused) return "var(--color-primary-500)";
+      return "var(--color-gray-200)";
     }};
   transition: border-color 0.2s ease-in-out, background-color 0.2s;
 
@@ -30,7 +43,9 @@ const TextareaContainer = styled.div<{
     !$disabled &&
     css`
       &:hover {
-        border-color: ${$status === "error" ? colors.error : colors.primary500};
+        border-color: ${$status === "error"
+          ? "var(--color-error)"
+          : "var(--color-primary-500)"};
       }
     `}
 `;
@@ -39,7 +54,7 @@ const StyledTextarea = styled.textarea`
   border: none;
   outline: none;
   ${typography.t16r}
-  color: ${colors.black};
+  color: var(--color-black);
   background: transparent;
   padding: 0;
   width: 100%;
@@ -47,7 +62,7 @@ const StyledTextarea = styled.textarea`
   resize: none;
 
   &::placeholder {
-    color: ${colors.gray300};
+    color: var(--color-gray-300);
   }
 
   &::-webkit-scrollbar {
@@ -56,7 +71,7 @@ const StyledTextarea = styled.textarea`
 
   &:disabled {
     cursor: not-allowed;
-    color: ${colors.gray300};
+    color: var(--color-gray-300);
   }
 `;
 
@@ -64,30 +79,34 @@ const BottomWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   margin-top: 4px;
-  padding: 0 4px;
   font-size: 12px;
 `;
 
 const Message = styled.span<{ $status: InputStatus }>`
   color: ${({ $status }) =>
-    $status === "error" ? colors.error : colors.black};
+    $status === "error" ? "var(--color-error)" : "var(--color-black)"};
 `;
 
-const Count = styled.span`
-  color: ${colors.gray300};
+const StyledCharacterCount = styled(CharacterCount)`
+  margin: 0;
   margin-left: auto;
+`;
+
+const TopCountWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  ${typography.t16sb}
   text-align: left;
-  color: ${colors.black};
+  color: var(--color-black);
 `;
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
     {
       label,
@@ -95,6 +114,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       status = "default",
       helperText,
       showCount = false,
+      countPosition = "bottom",
       value,
       maxLength,
       disabled,
@@ -108,9 +128,19 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const inputId = id || generatedId;
     const [isFocused, setIsFocused] = useState(false);
 
+    const showTopCount = showCount && countPosition === "top";
+    const showBottomCount = showCount && countPosition === "bottom";
+
     return (
       <div style={{ width: "100%" }}>
-        {label && <Label htmlFor={inputId}>{label}</Label>}
+        {(label || showTopCount) && (
+          <TopCountWrapper>
+            {label && <Label htmlFor={inputId}>{label}</Label>}
+            {showTopCount && (
+              <StyledCharacterCount value={value} maxLength={maxLength} />
+            )}
+          </TopCountWrapper>
+        )}
         <TextareaContainer
           $status={status}
           $isFocused={isFocused}
@@ -135,15 +165,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           />
         </TextareaContainer>
 
-        {(helperText || showCount) && (
+        {(helperText || showBottomCount) && (
           <BottomWrapper>
             {helperText && <Message $status={status}>{helperText}</Message>}
-
-            {showCount && (
-              <Count>
-                {String(value ?? "").length}
-                {maxLength ? ` / ${maxLength}` : ""}
-              </Count>
+            {showBottomCount && (
+              <StyledCharacterCount value={value} maxLength={maxLength} />
             )}
           </BottomWrapper>
         )}
@@ -153,3 +179,4 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 
 Textarea.displayName = "Textarea";
+export default Textarea;
