@@ -4,8 +4,10 @@ import { typography } from "../../styles/typography";
 
 import CameraIcon from "../../assets/images/icon/camera.svg?react";
 import TrashIcon from "../../assets/images/icon/delete-1.svg?react";
-import BackIcon from "../../assets/images/icon/left.svg?react";
 import ButtonSmall from "../ButtonSmall";
+
+import TodoDetailHeader from "./TodoDetailHeader";
+import type { SubjectKey } from "../SubjectSelectButton";
 
 interface PhotoUploadOverlayProps {
   isOpen: boolean;
@@ -16,69 +18,27 @@ interface PhotoUploadOverlayProps {
   title: string;
 }
 
-// --- Styles ---
-
 const Container = styled.div<{ $isOpen: boolean }>`
-  /* [수정 포인트] fixed -> absolute로 변경하여 부모(MobileFrame) 기준 배치 */
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%; /* 부모 너비(375px)를 꽉 채움 */
-  height: 100%; /* 부모 높이를 꽉 채움 */
+  width: 100%;
+  height: 100%;
   background-color: white;
-  z-index: 9999; /* 바텀시트보다 높게 */
+  z-index: 9999;
   display: flex;
   flex-direction: column;
 
-  /* 애니메이션: 아래에서 위로 올라옴 */
   transform: ${({ $isOpen }) =>
     $isOpen ? "translateY(0)" : "translateY(100%)"};
   transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 `;
 
-// 1. 헤더 영역
-const Header = styled.div`
-  height: 56px;
+const HeaderWrapper = styled.div`
   display: flex;
-  align-items: center;
-  padding-left: 12px;
-  border-bottom: 1px solid #f4f4f4;
+  flex-direction: column;
   background-color: white;
-`;
-
-const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  margin-right: 4px;
-`;
-
-const SubjectBadge = styled.span`
-  background-color: rgba(55, 109, 255, 0.1);
-  color: var(--color-blue-500);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-`;
-
-const HeaderTitle = styled.h2`
-  ${typography.t16sb}
-  color: var(--color-black);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* 필요하다면 여기에 z-index나 그림자 등을 추가하여 컨텐츠 위로 뜨는 느낌을 줄 수 있습니다. */
 `;
 
 // 2. 메인 컨텐츠 영역
@@ -96,6 +56,8 @@ const ContentHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 16px;
+  /* TodoDetailHeader 아래에 위치하므로 배경색 명시 */
+  background-color: white;
 `;
 
 const CounterText = styled.div`
@@ -116,7 +78,7 @@ const EmptyState = styled.div`
   justify-content: center;
   gap: 12px;
   color: var(--color-gray-500);
-  ${typography.t14r} /* t14r이 없다면 t14m 등으로 변경 */
+  ${typography.t14r}
   margin-bottom: 60px;
 `;
 
@@ -203,8 +165,6 @@ const SaveButton = styled.button<{ $active: boolean }>`
   cursor: ${({ $active }) => ($active ? "pointer" : "default")};
 `;
 
-// --- Component ---
-
 const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
   isOpen,
   onClose,
@@ -236,7 +196,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
       const remainingSlots = MAX_IMAGES - images.length;
 
       if (newFiles.length > remainingSlots) {
-        // TODO: 최대 업로드 개수 초과 알림 (디자인 시안 나오면 커스텀 모달로 교체)
+        // TODO: 최대 업로드 개수 초과 알림
         return;
       }
 
@@ -279,36 +239,34 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     onSave(images);
     onClose();
   };
+  console.log(subject);
 
   return (
     <Container $isOpen={isOpen}>
-      <Header>
-        <HeaderLeft>
-          <BackButton onClick={onClose}>
-            <BackIcon width={24} height={24} />
-          </BackButton>
-          <SubjectBadge>{subject}</SubjectBadge>
-          <HeaderTitle>{title}</HeaderTitle>
-        </HeaderLeft>
-      </Header>
-
-      <Content>
+      <HeaderWrapper>
+        <TodoDetailHeader
+          title={title}
+          subject={subject as SubjectKey}
+          onClickBack={onClose}
+        />
         <ContentHeader>
           <CounterText>
-            공부 인증 사진{" "}
+            공부 인증 사진
             <span>
               ({images.length}/{MAX_IMAGES})
             </span>
           </CounterText>
           <ButtonSmall
             onClick={() => fileInputRef.current?.click()}
-            disabled={images.length >= MAX_IMAGES} // 10장 넘으면 비활성화(회색) 됨
-            icon={<CameraIcon />} // 아이콘 전달 (선택)
+            disabled={images.length >= MAX_IMAGES}
+            icon={<CameraIcon />}
           >
             사진 추가
           </ButtonSmall>
         </ContentHeader>
+      </HeaderWrapper>
 
+      <Content>
         {!hasImages ? (
           <EmptyState>
             <div>아직 업로드된 사진이 없어요.</div>
