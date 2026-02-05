@@ -14,21 +14,21 @@ const CONFIG: Record<
   NumberBadgeVariant,
   { bg: string; ring: string; text: string }
 > = {
-  // 멘티 질문(초록)
+  // 멘티 질문
   question: {
     bg: "color-mix(in srgb, var(--color-primary-500) 60%, transparent)",
     ring: "var(--color-primary-500)",
     text: "var(--color-primary-700)",
   },
 
-  // 멘토 피드백(연한 파랑)
+  // 멘토 피드백
   feedback: {
     bg: "color-mix(in srgb, var(--color-blue-500) 30%, transparent)",
     ring: "var(--color-blue-500)",
     text: "var(--color-blue-500)",
   },
 
-  // 중요 피드백(진한 파랑)
+  // 중요 피드백
   important: {
     bg: "var(--color-blue-500)",
     ring: "color-mix(in srgb, var(--color-black) 30%, transparent)",
