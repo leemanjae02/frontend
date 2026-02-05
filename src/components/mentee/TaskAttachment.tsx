@@ -17,8 +17,6 @@ interface TaskAttachmentProps {
   onOpenUpload?: () => void;
 }
 
-// ... (스타일 컴포넌트들은 기존과 동일하므로 생략) ...
-
 const TaskAttachment: React.FC<TaskAttachmentProps> = ({
   mode,
   title,

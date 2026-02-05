@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { typography } from "../styles/typography";
+import { typography } from "../../styles/typography";
 import Textarea from "../Textarea";
 import Button from "../Button";
 import BottomSheet from "./BottomSheet";
