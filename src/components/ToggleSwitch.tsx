@@ -21,20 +21,18 @@ const ToggleSwitch = ({ on, onChange, disabled = false }: ToggleProps) => {
 
 const WIDTH = 48;
 const HEIGHT = 24;
-const PADDING = 1;
-const THUMB = 20;
-const MOVE = WIDTH - PADDING * 2 - THUMB;
+const THUMB = 21;
+const GAP = 1.5;
 
 const Button = styled.button<{ $on: boolean; $disabled: boolean }>`
   position: relative;
   width: ${WIDTH}px;
   height: ${HEIGHT}px;
-  padding: ${PADDING}px;
 
   border: 0;
   border-radius: 999px;
   background: ${({ $on }) =>
-    $on ? "var(--color-primary-600)" : "var(--color-gray-300)"};
+    $on ? "var(--color-primary-600)" : "var(--color-gray-200)"};
 
   cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   user-select: none;
@@ -54,17 +52,18 @@ const Button = styled.button<{ $on: boolean; $disabled: boolean }>`
 `;
 
 const Thumb = styled.span<{ $on: boolean }>`
-  display: block;
+  position: absolute;
+  top: 50%;
+
   width: ${THUMB}px;
   height: ${THUMB}px;
-
   border-radius: 50%;
   background: var(--color-white);
 
-  transform: translateX(${({ $on }) => ($on ? MOVE : 0)}px);
-  transition: transform 200ms ease;
+  left: ${({ $on }) => ($on ? `calc(100% - ${THUMB + GAP}px)` : `${GAP}px`)};
+  transform: translateY(-50%);
 
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  transition: left 200ms ease;
 `;
 
 export default ToggleSwitch;
