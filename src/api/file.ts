@@ -106,3 +106,42 @@ export const downloadFile = async (
     throw error;
   }
 };
+
+// =============================================================================
+// 인증샷 + 질문 마커 저장 API
+// =============================================================================
+
+// 질문 마커 데이터 타입
+export interface QuestionMarker {
+  content: string; // 질문 내용
+  percentX: number; // 이미지 내 가로 위치 백분율 (0~100)
+  percentY: number; // 이미지 내 세로 위치 백분율 (0~100)
+}
+
+// 인증샷 데이터 타입
+export interface ProofShotData {
+  imageFileId: number; // 업로드된 이미지의 ID
+  questions: QuestionMarker[];
+}
+
+// 요청 바디 타입
+export interface SubmitProofShotsRequest {
+  proofShots: ProofShotData[];
+}
+
+/**
+ * 인증샷 및 질문 마커 저장
+ * @param taskId 과제 ID
+ * @param data 인증샷 + 질문 데이터
+ */
+export const submitProofShots = async (
+  taskId: number,
+  data: SubmitProofShotsRequest
+): Promise<void> => {
+  try {
+    await axiosInstance.put(`/tasks/${taskId}/submit`, data);
+  } catch (error) {
+    console.error("인증샷 저장 실패:", error);
+    throw error;
+  }
+};
