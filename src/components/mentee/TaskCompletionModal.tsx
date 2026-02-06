@@ -12,7 +12,7 @@ interface TaskCompletionModalProps {
 }
 
 const Overlay = styled.div`
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -23,6 +23,7 @@ const Overlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  width: 100%;
 `;
 
 const ModalContainer = styled.div`

@@ -1,5 +1,15 @@
 export const dateUtils = {
   /**
+   * API 요청용 날짜 포맷 (YYYY-MM-DD)
+   */
+  formatToAPIDate: (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  },
+
+  /**
    * 헤더용 날짜 포맷 (YYYY년 M월 D일)
    */
   formatHeaderDate: (date: Date): string => {

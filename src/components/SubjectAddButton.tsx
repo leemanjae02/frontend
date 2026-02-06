@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { typography } from "../styles/typography";
-import plus from "../assets/plus.svg";
+import plus from "../assets/images/icon/plus-1.svg";
 
 export type SubjectKey = "KOREAN" | "ENGLISH" | "MATH";
 

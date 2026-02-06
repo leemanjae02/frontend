@@ -2,20 +2,18 @@ import { forwardRef, useId } from "react";
 import type { InputHTMLAttributes } from "react";
 import styled from "styled-components";
 
-import checkOn from "../assets/checkbox_checked.svg";
-import checkOff from "../assets/checkbox_default.svg";
+import checkOn from "../assets/images/icon/checkbox_checked.svg";
+import checkOff from "../assets/images/icon/checkbox_default.svg";
 
-interface CheckboxProps extends Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  "type"
-> {
+interface CheckboxProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label?: string;
 }
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
     { label, checked, defaultChecked, disabled, onChange, className, ...rest },
-    ref,
+    ref
   ) => {
     const autoId = useId();
     const id = rest.id ?? autoId;
@@ -42,7 +40,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         </Label>
       </Wrapper>
     );
-  },
+  }
 );
 
 const Wrapper = styled.div`
@@ -79,8 +77,8 @@ const Label = styled.label<{ $disabled: boolean }>`
 `;
 
 const Icon = styled.img`
-  width: 36px;
-  height: 36px;
+  width: 24px;
+  height: 24px;
   display: block;
 `;
 
