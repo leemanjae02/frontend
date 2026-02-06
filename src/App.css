@@ -1,7 +1,6 @@
 :root {
-  --font-sans:
-    Pretendard, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR",
-    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-sans: Pretendard, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
   --color-error: #d12923;
 
@@ -34,11 +33,14 @@
 html,
 body {
   font-family: var(--font-sans);
+  padding: 0;
+  margin: 0;
 }
 
 #root {
   max-width: 1280px;
   margin: 0 auto;
+  padding: 0;
   text-align: center;
   font-family: var(--font-sans);
 }

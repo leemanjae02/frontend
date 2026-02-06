@@ -1,17 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
 import Input from "./Input";
 import Button from "./Button";
 import { typography } from "../styles/typography";
+import { fetchTaskDetail } from "../api/task";
 
 export type TodoFormMode = "create" | "edit";
 
 export interface TodoFormProps {
   mode: TodoFormMode;
-  initialValues?: {
-    name: string;
-    time: string;
-  };
+  taskId?: number | null;
   onSubmit?: (data: { name: string; time: string }) => void;
 }
 
@@ -37,11 +35,32 @@ const FieldWrapper = styled.div`
 
 const TodoForm = ({
   mode,
-  initialValues = { name: "", time: "" },
+  taskId,
   onSubmit,
 }: TodoFormProps) => {
-  const [name, setName] = useState(initialValues.name);
-  const [time, setTime] = useState(initialValues.time);
+  const [name, setName] = useState("");
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    if (mode === "edit" && taskId) {
+      let isMounted = true;
+      const loadDetail = async () => {
+        try {
+          const data = await fetchTaskDetail(taskId);
+          if (isMounted) {
+            setName(data.title);
+            setTime(String(data.targetTime));
+          }
+        } catch (error) {
+          console.error("할 일 상세 정보 로딩 실패:", error);
+        }
+      };
+      loadDetail();
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [mode, taskId]);
 
   const MAX_NAME_LENGTH = 50;
   const titleText = mode === "create" ? "할 일 등록하기" : "할 일 수정하기";
@@ -50,8 +69,6 @@ const TodoForm = ({
   const handleSubmit = () => {
     if (!name || !time) return;
     onSubmit?.({ name, time });
-    setName("");
-    setTime("");
   };
 
   const isButtonDisabled = !name || !time;
