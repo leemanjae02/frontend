@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import MentorDashboardPage from "./pages/mentor/MentorDashboardPage";
 import PublicRoute from "./components/auth/PublicRoute";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import TodoFeedbackDetailPage from "./pages/mentee/FeedbackDetailPage";
 
 function App() {
   return (
@@ -24,6 +25,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["ROLE_MENTOR"]}>
             <MentorDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mentee/todos/:todoId/feedback"
+        element={
+          <ProtectedRoute allowedRoles={["ROLE_MENTEE"]}>
+            <TodoFeedbackDetailPage />
           </ProtectedRoute>
         }
       />
