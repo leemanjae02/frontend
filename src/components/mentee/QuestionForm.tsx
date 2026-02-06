@@ -37,7 +37,7 @@ const DeleteButton = styled(Button)`
 `;
 
 const SubmitButton = styled(Button)<{ $isEditMode: boolean }>`
-  flex: ${({ $isEditMode }) => ($isEditMode ? 7 : 1)};
+  flex: ${({ $isEditMode }) => ($isEditMode ? 3 : 3)};
 `;
 
 const QuestionFormContent = ({
