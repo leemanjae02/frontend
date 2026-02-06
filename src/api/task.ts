@@ -112,11 +112,11 @@ const transformDetailData = (data: TaskDetailResponse): TaskDetailData => {
 
 // 2-3. 상세 조회 API 함수
 export const fetchTaskDetail = async (
-  taskId: number
+  taskId: number,
 ): Promise<TaskDetailData> => {
   try {
     const { data } = await axiosInstance.get<TaskDetailResponse>(
-      `/tasks/${taskId}/details`
+      `/tasks/${taskId}/details`,
     );
     return transformDetailData(data);
   } catch (error) {
@@ -162,7 +162,7 @@ export interface UpdateTaskRequest {
 
 export const updateTask = async (
   taskId: number,
-  payload: UpdateTaskRequest
+  payload: UpdateTaskRequest,
 ): Promise<void> => {
   try {
     await axiosInstance.put(`/tasks/mentee/${taskId}`, payload);
@@ -195,7 +195,7 @@ export const deleteTask = async (taskId: number): Promise<void> => {
 export const toggleTaskComplete = async (
   taskId: number,
   date: Date,
-  actualMinutes?: number
+  actualMinutes?: number,
 ): Promise<void> => {
   try {
     await axiosInstance.patch(`/tasks/${taskId}/completed`, {
@@ -204,6 +204,113 @@ export const toggleTaskComplete = async (
     });
   } catch (error) {
     console.error("완료 토글 실패:", error);
+    throw error;
+  }
+};
+
+// [SECTION 7] 할 일 피드백 상세 조회
+
+export type RegisterStatus = "TEMPORARY" | "REGISTERED";
+
+export interface FeedbackAnnotation {
+  annotationId: number;
+  annotationNumber: number;
+  percentX: number;
+  percentY: number;
+}
+
+export interface TaskFeedbackQuestion {
+  questionId: number;
+  questionNumber: number;
+  content: string;
+  answer: string | null;
+  annotation: FeedbackAnnotation | null;
+}
+
+export interface TaskFeedbackItem {
+  feedbackId: number;
+  feedbackNumber: number;
+  content: string;
+  starred: boolean;
+  registerStatus: RegisterStatus;
+  annotation: FeedbackAnnotation | null;
+}
+
+export interface TaskFeedbackProofShot {
+  proofShotId: number;
+  imageFileId: number;
+
+  questions: TaskFeedbackQuestion[];
+
+  feedbacks: TaskFeedbackItem[];
+}
+
+// 서버 응답 타입
+export interface TaskFeedbackResponse {
+  taskId: number;
+  subject: "KOREAN" | "ENGLISH" | "MATH" | "RESOURCE" | string;
+  taskName: string;
+  mentorName: string;
+  generalComment: string;
+  proofShots: TaskFeedbackProofShot[];
+}
+
+export interface TaskFeedbackDetailData {
+  taskId: number;
+  subjectKey: string;
+  subjectLabel: string;
+  todoTitle: string;
+
+  overallMentorName: string;
+  overallComment: string;
+
+  proofShots: Array<{
+    proofShotId: number;
+    imageFileId: number;
+    questions: TaskFeedbackQuestion[];
+    feedbacks: TaskFeedbackItem[];
+  }>;
+}
+
+const subjectLabelMap: Record<string, string> = {
+  KOREAN: "국어",
+  ENGLISH: "영어",
+  MATH: "수학",
+  RESOURCE: "자료",
+};
+
+const transformTaskFeedbackData = (
+  data: TaskFeedbackResponse,
+): TaskFeedbackDetailData => {
+  return {
+    taskId: data.taskId,
+    subjectKey: data.subject,
+    subjectLabel: subjectLabelMap[data.subject] || data.subject,
+    todoTitle: data.taskName,
+
+    overallMentorName: data.mentorName || "멘토",
+    overallComment: data.generalComment ?? "",
+
+    proofShots: (data.proofShots || []).map((ps) => ({
+      proofShotId: ps.proofShotId,
+      imageFileId: ps.imageFileId,
+      questions: ps.questions || [],
+      feedbacks: ps.feedbacks || [],
+    })),
+  };
+};
+
+// 피드백 상세 조회 API 함수
+export const fetchTaskFeedbackDetail = async (
+  taskId: number,
+): Promise<TaskFeedbackDetailData> => {
+  try {
+    const { data } = await axiosInstance.get<TaskFeedbackResponse>(
+      `/tasks/${taskId}/feedback`,
+    );
+    return transformTaskFeedbackData(data);
+  } catch (error) {
+    console.error("피드백 상세 조회 실패:", error);
     throw error;
   }
 };

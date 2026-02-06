@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import styled, { css } from "styled-components";
 import { typography } from "../../styles/typography";
 import TeacherIcon from "../../assets/images/icon/teacher.svg?react";
@@ -30,6 +30,7 @@ export interface TaskDetailData {
 interface TaskDetailProps {
   data: TaskDetailData;
   onOpenPhotoUpload?: () => void;
+  onOpenFeedbackDetail?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -186,11 +187,10 @@ const ActionButton = styled.button<{ $variant: "secondary" | "danger" }>`
 const TaskDetailContent: React.FC<TaskDetailProps> = ({
   data,
   onOpenPhotoUpload,
+  onOpenFeedbackDetail,
   onEdit,
   onDelete,
 }) => {
-  const [isFeedbackExpanded, setIsFeedbackExpanded] = useState(false);
-
   const shouldShowUpload = !data.mentorFeedback;
 
   return (
@@ -251,14 +251,16 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
             <ChatIcon />
             {data.mentorFeedback.mentorName} 멘토의 피드백
           </FeedbackHeader>
-          <FeedbackContent $expanded={isFeedbackExpanded}>
+          <FeedbackContent $expanded={false}>
             {data.mentorFeedback.content}
           </FeedbackContent>
-          {data.mentorFeedback.content.length > 50 && !isFeedbackExpanded && (
-            <MoreButton onClick={() => setIsFeedbackExpanded(true)}>
-              자세히 보기
-            </MoreButton>
-          )}
+          <MoreButton
+            type="button"
+            onClick={onOpenFeedbackDetail}
+            disabled={!onOpenFeedbackDetail}
+          >
+            자세히 보기
+          </MoreButton>
         </FeedbackBox>
       )}
 

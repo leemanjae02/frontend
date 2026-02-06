@@ -26,6 +26,7 @@ import { uploadFile, submitProofShots } from "../api/file";
 import { dateUtils } from "../utils/dateUtils";
 import type { ImageMarkerData } from "../components/mentee/PhotoUploadOverlay";
 import type { DashboardSummaryData } from "../components/mentee/Dashboard";
+import FeedbackDetailOverlay from "../components/mentee/FeedbackDetailOverlay";
 
 const MobileScreen = styled.div`
   min-width: 375px;
@@ -100,6 +101,12 @@ const SubjectGroup = styled.div`
 // 과목 순서 정의
 const SUBJECT_ORDER = ["KOREAN", "ENGLISH", "MATH"];
 
+interface FeedbackDetailInfo {
+  taskId: number;
+  subject: string;
+  title: string;
+}
+
 const MainPage = () => {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"DETAIL" | "FORM">("FORM");
@@ -127,6 +134,10 @@ const MainPage = () => {
     taskId: number;
     taskName: string;
   } | null>(null);
+
+  const [isFeedbackDetailOpen, setIsFeedbackDetailOpen] = useState(false);
+  const [feedbackDetailInfo, setFeedbackDetailInfo] =
+    useState<FeedbackDetailInfo | null>(null);
 
   const refreshTasks = async () => {
     try {
@@ -219,7 +230,7 @@ const MainPage = () => {
   const handleSavePhotos = async (
     images: string[],
     files: File[],
-    markersData: ImageMarkerData[]
+    markersData: ImageMarkerData[],
   ) => {
     setUploadedImages(images);
     setUploadedFiles(files);
@@ -227,7 +238,7 @@ const MainPage = () => {
     if (files.length > 0 && selectedTaskId) {
       try {
         const uploadResults = await Promise.all(
-          files.map((file) => uploadFile(file, "/proof-shots"))
+          files.map((file) => uploadFile(file, "/proof-shots")),
         );
 
         const proofShots = uploadResults.map((result, idx) => ({
@@ -249,7 +260,7 @@ const MainPage = () => {
   const handleToggleDone = (
     taskId: number,
     taskName: string,
-    isCompleted: boolean
+    isCompleted: boolean,
   ) => {
     if (isCompleted) {
       handleCompleteWithoutModal(taskId);
@@ -276,7 +287,7 @@ const MainPage = () => {
       await toggleTaskComplete(
         pendingCompleteTask.taskId,
         selectedDate,
-        actualMinutes
+        actualMinutes,
       );
       await refreshTasks();
       setIsCompletionModalOpen(false);
@@ -298,6 +309,20 @@ const MainPage = () => {
       setSelectedTaskId(null);
       setActiveSubject(null);
     }, 300);
+  };
+
+  const openFeedbackDetail = (info: FeedbackDetailInfo) => {
+    setIsBottomSheetOpen(false);
+
+    setTimeout(() => {
+      setFeedbackDetailInfo(info);
+      setIsFeedbackDetailOpen(true);
+    }, 300);
+  };
+
+  const closeFeedbackDetail = () => {
+    setIsFeedbackDetailOpen(false);
+    setTimeout(() => setFeedbackDetailInfo(null), 300);
   };
 
   return (
@@ -327,7 +352,7 @@ const MainPage = () => {
         <SubjectListWrapper>
           {SUBJECT_ORDER.map((subject) => {
             const subjectTasks = tasks.filter(
-              (task) => task.taskSubject === subject
+              (task) => task.taskSubject === subject,
             );
             const visibleTasks = isToggle
               ? subjectTasks
@@ -348,7 +373,7 @@ const MainPage = () => {
                       handleToggleDone(
                         task.taskId,
                         task.taskName,
-                        task.completed
+                        task.completed,
                       )
                     }
                     onClick={() => handleCardClick(task.taskId)}
@@ -367,6 +392,13 @@ const MainPage = () => {
             onEditClick={handleSwitchToEdit}
             onDeleteSuccess={handleDeleteSuccess}
             onOpenPhotoUpload={handleOpenPhotoUpload}
+            onOpenFeedbackDetail={(taskInfo) => {
+              openFeedbackDetail({
+                taskId: selectedTaskId,
+                subject: taskInfo.subject,
+                title: taskInfo.title,
+              });
+            }}
           />
         ) : (
           <TodoForm
@@ -386,6 +418,15 @@ const MainPage = () => {
         onSave={handleSavePhotos}
         subject={photoUploadInfo?.subject ?? ""}
         title={photoUploadInfo?.title ?? ""}
+      />
+
+      {/* 피드백 상세 오버레이 */}
+      <FeedbackDetailOverlay
+        isOpen={isFeedbackDetailOpen}
+        onClose={closeFeedbackDetail}
+        taskId={feedbackDetailInfo?.taskId ?? null}
+        subject={feedbackDetailInfo?.subject ?? ""}
+        title={feedbackDetailInfo?.title ?? ""}
       />
 
       {/* 완료 시간 입력 모달 */}
