@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import styled, { css } from "styled-components";
 import { typography } from "../../styles/typography";
-// SVG를 컴포넌트로 사용하기 위해 ?react 사용
 import TeacherIcon from "../../assets/images/icon/teacher.svg?react";
 import ChatIcon from "../../assets/images/icon/chat.svg?react";
 import TaskAttachment from "./TaskAttachment";
 
-// --- Types ---
 export interface AttachmentData {
   id: number | string;
   type: "PDF" | "LINK";
@@ -18,9 +16,10 @@ export interface AttachmentData {
 export interface TaskDetailData {
   title: string;
   subject: string;
+  subjectKey: string;
   targetTime: number;
   actualTime?: number;
-  isMentorAssigned: boolean; // true: 멘토 할당, false: 멘티 생성
+  isMentorAssigned: boolean;
   attachments?: AttachmentData[];
   mentorFeedback?: {
     mentorName: string;
@@ -64,11 +63,10 @@ const MentorBadge = styled.div`
   background-color: var(--color-primary-700);
   border-radius: 100px;
   color: var(--color-primary-500);
-  /* 폰트/아이콘 정렬 보정 */
   span {
     ${typography.t12sb}
     line-height: 1;
-    margin-bottom: 1px; /* 시각적 중앙 정렬 */
+    margin-bottom: 1px;
   }
   svg path {
     stroke: var(--color-white);
@@ -193,13 +191,6 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
 }) => {
   const [isFeedbackExpanded, setIsFeedbackExpanded] = useState(false);
 
-  const SUBJECT_LABELS: Record<string, string> = {
-    KOREAN: "국어",
-    MATH: "수학",
-    ENGLISH: "영어",
-  };
-
-  // 피드백이 존재하면(!data.mentorFeedback) 업로드 버튼을 숨깁니다.
   const shouldShowUpload = !data.mentorFeedback;
 
   return (
@@ -239,7 +230,7 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
       <InfoList>
         <InfoRow>
           <Label>과목</Label>
-          <Value>{SUBJECT_LABELS[data.subject]}</Value>
+          <Value>{data.subject}</Value>
         </InfoRow>
         <InfoRow>
           <Label>목표 설정 시간</Label>
@@ -271,7 +262,7 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
         </FeedbackBox>
       )}
 
-      {/* 5. Actions (멘티 생성 글일 때만 수정/삭제 가능) */}
+      {/* 5. Actions (멘토 할당 글이 아닐 때만 수정/삭제 가능) */}
       {!data.isMentorAssigned && (
         <ButtonGroup>
           <ActionButton $variant="secondary" onClick={onEdit}>

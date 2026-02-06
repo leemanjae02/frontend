@@ -34,23 +34,19 @@ const MenteeHeader = ({
 const Wrap = styled.header`
   width: 100%;
   height: 48px;
-
   background: var(--color-white);
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 
-  overflow: hidden;
 `;
 
 const Inner = styled.div`
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  padding: 0 8px;
+  padding: 12px 16px;
 `;
 
 const LogoButton = styled.button`
