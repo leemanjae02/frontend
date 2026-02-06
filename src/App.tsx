@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import MentorDashboardPage from "./pages/mentor/MentorDashboardPage";
 import PublicRoute from "./components/auth/PublicRoute";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import MentorLayout from "./layout/MentorLayout";
 
 function App() {
   return (
@@ -20,13 +21,16 @@ function App() {
 
       {/* 2. 멘토 대시보드 (멘토만 접근 가능) */}
       <Route
-        path="/mentor/dashboard"
+        path="/mentor"
         element={
           <ProtectedRoute allowedRoles={["ROLE_MENTOR"]}>
-            <MentorDashboardPage />
+            <MentorLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route path="dashboard" element={<MentorDashboardPage />} />
+        {/* <Route path="mentees/:menteeId" element={<MentorMenteeDetailPage />} /> */}
+      </Route>
 
       {/* 3. 루트 경로 (멘티 메인) */}
       {/* 로그인 안 했으면 -> /login으로 리다이렉트 */}
