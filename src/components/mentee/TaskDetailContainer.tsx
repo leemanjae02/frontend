@@ -8,6 +8,7 @@ interface TaskDetailContainerProps {
   onEditClick: () => void;
   onDeleteSuccess: () => void;
   onOpenPhotoUpload?: (taskInfo: { subject: string; title: string }) => void;
+  onOpenFeedbackDetail?: (taskInfo: { subject: string; title: string }) => void;
 }
 
 const LoadingWrapper = styled.div`
@@ -24,6 +25,7 @@ const TaskDetailContainer = ({
   onEditClick,
   onDeleteSuccess,
   onOpenPhotoUpload,
+  onOpenFeedbackDetail,
 }: TaskDetailContainerProps) => {
   const [data, setData] = useState<TaskDetailData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,10 +77,20 @@ const TaskDetailContainer = ({
     }
   };
 
+  const handleOpenFeedbackDetail = () => {
+    if (onOpenFeedbackDetail) {
+      onOpenFeedbackDetail({
+        subject: data.subjectKey,
+        title: data.title,
+      });
+    }
+  };
+
   return (
     <TaskDetailContent
       data={data}
       onOpenPhotoUpload={handleOpenPhotoUpload}
+      onOpenFeedbackDetail={handleOpenFeedbackDetail}
       onEdit={onEditClick}
       onDelete={handleDelete}
     />

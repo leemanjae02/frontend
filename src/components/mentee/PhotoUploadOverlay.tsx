@@ -9,8 +9,8 @@ import ButtonSmall from "../ButtonSmall";
 import TodoDetailHeader from "./TodoDetailHeader";
 import Marker from "./Marker";
 import QuestionForm from "./QuestionForm";
-import type { SubjectKey } from "../SubjectSelectButton";
 import type { QuestionMarker } from "../../api/file";
+import type { SubjectKey } from "../SubjectAddButton";
 
 // 이미지별 마커 데이터 타입
 export interface ImageMarkerData {
@@ -28,7 +28,7 @@ interface PhotoUploadOverlayProps {
   onSave: (
     finalImages: string[],
     files: File[],
-    markersData: ImageMarkerData[]
+    markersData: ImageMarkerData[],
   ) => void;
   subject: string;
   title: string;
@@ -238,7 +238,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     y: number;
   } | null>(null);
   const [editingMarkerIndex, setEditingMarkerIndex] = useState<number | null>(
-    null
+    null,
   );
 
   // 제한 초과 경고 표시 상태
@@ -351,11 +351,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
             ? {
                 ...data,
                 markers: data.markers.map((marker, mIdx) =>
-                  mIdx === editingMarkerIndex ? { ...marker, content } : marker
+                  mIdx === editingMarkerIndex ? { ...marker, content } : marker,
                 ),
               }
-            : data
-        )
+            : data,
+        ),
       );
     } else if (pendingPosition) {
       const newMarker: QuestionMarker = {
@@ -367,8 +367,8 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
         prev.map((data, idx) =>
           idx === currentIndex
             ? { ...data, markers: [...data.markers, newMarker] }
-            : data
-        )
+            : data,
+        ),
       );
     }
 
@@ -390,11 +390,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
           ? {
               ...data,
               markers: data.markers.filter(
-                (_, mIdx) => mIdx !== editingMarkerIndex
+                (_, mIdx) => mIdx !== editingMarkerIndex,
               ),
             }
-          : data
-      )
+          : data,
+      ),
     );
     setIsPopupOpen(false);
     setEditingMarkerIndex(null);
