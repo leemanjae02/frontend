@@ -7,6 +7,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import MentorLayout from "./layout/MentorLayout";
 import MenteeDetailPage from "./pages/mentor/MenteeDetailPage";
 import TodoCreateSection from "./components/mentor/sections/TodoCreateSection";
+import ResourceSection from "./components/mentor/sections/ResourceSection";
+import ResourceCreateForm from "./components/mentor/ResourceCreateForm";
 
 function App() {
   return (
@@ -37,9 +39,10 @@ function App() {
           <Route index element={<Navigate to="todo" replace />} />
 
           <Route path="todo" element={<TodoCreateSection />} />
+          <Route path="resources" element={<ResourceSection />} />
+          <Route path="resources/new" element={<ResourceCreateForm />} />
           {/* 나머지는 추후 구현 */}
           {/* <Route path="plan" element={<div style={{ padding: 24 }}>주간 학습 계획</div>} /> */}
-          {/* <Route path="resources" element={<div style={{ padding: 24 }}>자료 관리</div>} /> */}
           {/* <Route path="reports" element={<div style={{ padding: 24 }}>주간 학습 리포트 발송</div>} /> */}
         </Route>
       </Route>

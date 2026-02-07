@@ -78,7 +78,6 @@ const MenteeListTable = ({
 const Outer = styled.div`
   width: 100%;
   overflow: hidden;
-  background: var(--color-white);
 `;
 
 const Table = styled.table`

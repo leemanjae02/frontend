@@ -5,12 +5,19 @@ import "react-day-picker/dist/style.css";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
+type PickerMode = "single" | "multiple";
+
 interface Props {
-  value: string;
-  onChange: (next: string) => void;
+  mode?: PickerMode;
+  value: string | string[];
+  onChange: (next: string | string[]) => void;
   disabled?: boolean;
   popoverAlign?: "start" | "end";
   icon: React.ReactNode;
+}
+
+function isYYYYMMDD(v: string) {
+  return /^(\d{4})-(\d{2})-(\d{2})$/.test(v.trim());
 }
 
 function parseYYYYMMDD(v: string): Date | undefined {
@@ -31,7 +38,12 @@ function toYYYYMMDD(d: Date) {
   return format(d, "yyyy-MM-dd");
 }
 
+function sortYYYYMMDD(list: string[]) {
+  return [...list].sort((a, b) => a.localeCompare(b));
+}
+
 const DatePicker = ({
+  mode = "single",
   value,
   onChange,
   disabled = false,
@@ -41,7 +53,16 @@ const DatePicker = ({
   const anchorRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
 
-  const selectedDate = useMemo(() => parseYYYYMMDD(value), [value]);
+  const selectedSingle = useMemo(() => {
+    if (mode !== "single") return undefined;
+    return typeof value === "string" ? parseYYYYMMDD(value) : undefined;
+  }, [mode, value]);
+
+  const selectedMultiple = useMemo(() => {
+    if (mode !== "multiple") return undefined;
+    const arr = Array.isArray(value) ? value : [];
+    return arr.map((v) => parseYYYYMMDD(v)).filter(Boolean) as Date[];
+  }, [mode, value]);
 
   useEffect(() => {
     if (!open) return;
@@ -82,22 +103,41 @@ const DatePicker = ({
       </IconButton>
 
       {open && (
-        <Popover $align={popoverAlign}>
-          <DayPicker
-            mode="single"
-            selected={selectedDate}
-            onSelect={(d) => {
-              if (!d) return;
-              onChange(toYYYYMMDD(d));
-              setOpen(false);
-            }}
-            locale={ko}
-            captionLayout="dropdown"
-            fromYear={2020}
-            toYear={2035}
-            showOutsideDays
-            className="rdp"
-          />
+        <Popover $align={popoverAlign} role="dialog" aria-label="날짜 선택">
+          {mode === "single" ? (
+            <DayPicker
+              mode="single"
+              selected={selectedSingle}
+              onSelect={(d) => {
+                if (!d) return;
+                onChange(toYYYYMMDD(d));
+                setOpen(false);
+              }}
+              locale={ko}
+              captionLayout="dropdown"
+              fromYear={2020}
+              toYear={2035}
+              showOutsideDays
+              className="rdp"
+            />
+          ) : (
+            <DayPicker
+              mode="multiple"
+              selected={selectedMultiple}
+              onSelect={(ds) => {
+                const picked = (ds ?? [])
+                  .map((d) => toYYYYMMDD(d))
+                  .filter((v) => isYYYYMMDD(v));
+                onChange(sortYYYYMMDD(picked));
+              }}
+              locale={ko}
+              captionLayout="dropdown"
+              fromYear={2020}
+              toYear={2035}
+              showOutsideDays
+              className="rdp"
+            />
+          )}
         </Popover>
       )}
     </Anchor>

@@ -1,5 +1,6 @@
 import type { MenteeInfoData } from "../components/mentor/MenteeInfo";
 import type { MentorMenteeRow } from "../components/mentor/MenteeListTable";
+import type { MentorResourceRow } from "../components/mentor/ResourceListTable";
 
 export const mockMentorMenteeRows: MentorMenteeRow[] = [
   {
@@ -67,3 +68,42 @@ export const getMockMenteeById = (menteeId: string | number) => {
   const idNum = Number(menteeId);
   return mockMentorMenteeRows.find((r) => Number(r.menteeId) === idNum) ?? null;
 };
+
+export const mockMentorResources: MentorResourceRow[] = [
+  {
+    resourceId: 1,
+    title: "오답노트 양식",
+    createdAtLabel: "2026.02.03",
+    subjectLabel: "수학",
+  },
+  {
+    resourceId: 2,
+    title: "학습지 풀이과정 양식",
+    createdAtLabel: "2026.02.03",
+    subjectLabel: "수학",
+  },
+  {
+    resourceId: 3,
+    title: "영단어 시험지",
+    createdAtLabel: "2026.02.03",
+    subjectLabel: "영어",
+  },
+  {
+    resourceId: 4,
+    title: "영단어 시험지",
+    createdAtLabel: "2026.02.03",
+    subjectLabel: "영어",
+  },
+  {
+    resourceId: 5,
+    title: "영단어 시험지",
+    createdAtLabel: "2026.02.03",
+    subjectLabel: "영어",
+  },
+  {
+    resourceId: 6,
+    title: "영단어 시험지",
+    createdAtLabel: "2026.02.03",
+    subjectLabel: "영어",
+  },
+];
