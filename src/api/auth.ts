@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosInstance";
-import type { LoginRequest, AuthResponse } from "../@types/auth";
+import type { LoginRequest, AuthResponse, MeResponse } from "../@types/auth";
 
 // 로그인 API
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
@@ -17,3 +17,9 @@ export const refresh = async (): Promise<AuthResponse> => {
 // export const logout = async (): Promise<void> => {
 //   await axiosInstance.post("/auth/logout");
 // };
+
+// 내 정보 조회 API
+export const fetchMe = async (): Promise<MeResponse> => {
+  const response = await axiosInstance.get<MeResponse>("/users/me");
+  return response.data;
+};

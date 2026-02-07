@@ -14,12 +14,12 @@ const STATUS_CONFIG: Record<
 > = {
   SUBMITTED: {
     text: "제출 완료",
-    bgColor: "#EEF2FF",
+    bgColor: "color-mix(in srgb, var(--color-blue-500) 15%, transparent)",
     dotColor: "var(--color-blue-500)",
   },
   NOT_SUBMITTED: {
     text: "미제출",
-    bgColor: "#FFF1E6",
+    bgColor: "color-mix(in srgb, var(--color-orange-500) 15%, transparent);",
     dotColor: "var(--color-orange-500)",
   },
   SCHEDULED: {

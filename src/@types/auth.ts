@@ -19,3 +19,8 @@ export interface AuthState {
   role: UserRole | null;
   isAuthenticated: boolean;
 }
+
+export type MeResponse = {
+  name: string;
+  profileImage: string | null;
+};

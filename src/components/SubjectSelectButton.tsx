@@ -100,19 +100,6 @@ const ItemButton = styled.button<{
     border-color 180ms ease,
     transform 80ms ease;
 
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--color-primary-200);
-  }
-
   ${({ $active, $activeBg }) =>
     $active &&
     css`
