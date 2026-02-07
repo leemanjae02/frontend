@@ -98,7 +98,7 @@ const ItemLink = styled(NavLink)`
   }
 
   &.active:hover {
-    background: color-mix(in srgb, var(--color-primary-100), white);
+    background: color-mix(in srgb, var(--color-primary-100) 50%, white);
   }
 `;
 

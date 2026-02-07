@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 import CalendarIcon from "../../../assets/images/icon/month.svg?react";
@@ -12,6 +12,10 @@ import Input from "../../Input";
 import Button from "../../Button";
 import SquareChip from "../../SquareChip";
 import { typography } from "../../../styles/typography";
+import ButtonMinus from "../../ButtonMinus";
+import DatePicker from "../../DatePicker";
+
+type ResourceMode = "EMPTY" | "CHOICE" | "FILE" | "LINK";
 
 export default function TodoCreateSection() {
   const [subject, setSubject] = useState<SubjectKey>("KOREAN");
@@ -21,11 +25,43 @@ export default function TodoCreateSection() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const [taskName, setTaskName] = useState("");
+  const [taskNameInput, setTaskNameInput] = useState("");
+  const [taskNames, setTaskNames] = useState<string[]>([]);
   const [goalMinutes, setGoalMinutes] = useState("");
 
+  const [resourceMode, setResourceMode] = useState<ResourceMode>("EMPTY");
+  const [fileName, setFileName] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const openFilePicker = () => fileInputRef.current?.click();
+
+  const applyFile = (file?: File | null) => {
+    if (!file) return;
+    setFileName(file.name);
+    setLinkUrl("");
+    setResourceMode("FILE");
+  };
+
+  const onDropUpload = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    applyFile(file);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const removeResource = () => {
+    setFileName("");
+    setLinkUrl("");
+    setResourceMode("CHOICE");
+  };
+
   const isValid = useMemo(() => {
-    const hasName = taskName.trim().length > 0;
+    const hasName = taskNames.length > 0;
 
     const minutes = Number(goalMinutes);
     const hasMinutes =
@@ -37,13 +73,30 @@ export default function TodoCreateSection() {
         String(endDate).trim().length > 0;
 
     return !!subject && hasDate && hasName && hasMinutes;
-  }, [subject, usePeriod, date, startDate, endDate, taskName, goalMinutes]);
+  }, [subject, usePeriod, date, startDate, endDate, taskNames, goalMinutes]);
+
+  const addTaskName = () => {
+    const v = taskNameInput.trim();
+    if (!v) return;
+
+    if (taskNames.includes(v)) {
+      setTaskNameInput("");
+      return;
+    }
+
+    setTaskNames((prev) => [...prev, v]);
+    setTaskNameInput("");
+  };
+
+  const removeTaskName = (idx: number) => {
+    setTaskNames((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const handleSubmit = () => {
     const payload = {
       subject,
       usePeriod,
-      taskName,
+      taskNames,
       goalMinutes: Number(goalMinutes),
 
       ...(usePeriod ? { startDate, endDate } : { date }),
@@ -96,7 +149,14 @@ export default function TodoCreateSection() {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="YYYY-MM-DD"
-                rightIcon={<CalendarIcon />}
+                rightIcon={
+                  <DatePicker
+                    value={date}
+                    onChange={setDate}
+                    icon={<CalendarIcon />}
+                    popoverAlign="end"
+                  />
+                }
                 readOnly={false}
               />
             ) : (
@@ -105,14 +165,28 @@ export default function TodoCreateSection() {
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   placeholder="YYYY-MM-DD"
-                  rightIcon={<CalendarIcon />}
+                  rightIcon={
+                    <DatePicker
+                      value={startDate}
+                      onChange={setStartDate}
+                      icon={<CalendarIcon />}
+                      popoverAlign="end"
+                    />
+                  }
                   readOnly={false}
                 />
                 <Input
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   placeholder="YYYY-MM-DD"
-                  rightIcon={<CalendarIcon />}
+                  rightIcon={
+                    <DatePicker
+                      value={endDate}
+                      onChange={setEndDate}
+                      icon={<CalendarIcon />}
+                      popoverAlign="end"
+                    />
+                  }
                   readOnly={false}
                 />
               </PeriodGrid>
@@ -127,7 +201,7 @@ export default function TodoCreateSection() {
             </RowLabel>
 
             <AddBtn>
-              <Button onClick={() => {}} disabled={!taskName.trim()}>
+              <Button onClick={addTaskName} disabled={!taskNameInput.trim()}>
                 추가
               </Button>
             </AddBtn>
@@ -135,14 +209,45 @@ export default function TodoCreateSection() {
 
           <RowBody>
             <Input
-              value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
-              placeholder="예: 영어단어 10개 외우기"
+              value={taskNameInput}
+              onChange={(e) => setTaskNameInput(e.target.value)}
+              placeholder=""
               maxLength={50}
               showCount
               countPosition="bottom"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addTaskName();
+                }
+              }}
             />
           </RowBody>
+
+          {taskNames.length > 0 && (
+            <AddedList>
+              {taskNames.map((name, idx) => (
+                <AddedItem key={`${name}-${idx}`}>
+                  <AddedInputWrap>
+                    <Input
+                      value={name}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setTaskNames((prev) =>
+                          prev.map((v, i) => (i === idx ? next : v)),
+                        );
+                      }}
+                      maxLength={50}
+                      showCount
+                      countPosition="bottom"
+                    />
+                  </AddedInputWrap>
+
+                  <ButtonMinus onClick={() => removeTaskName(idx)} />
+                </AddedItem>
+              ))}
+            </AddedList>
+          )}
         </Row>
 
         <Row>
@@ -169,27 +274,87 @@ export default function TodoCreateSection() {
           <RowLabel>학습 자료</RowLabel>
 
           <RowBody>
-            <ResourceGrid>
-              <SquareChip onClick={() => {}}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              style={{ display: "none" }}
+              onChange={(e) => applyFile(e.target.files?.[0])}
+            />
+
+            {resourceMode === "EMPTY" && (
+              <SquareChip
+                onClick={openFilePicker}
+                onDragOver={onDragOver}
+                onDrop={onDropUpload}
+              >
                 <Inner>
                   <Icon>
                     <UploadIcon />
                   </Icon>
-                  <Title>PDF 파일 업로드</Title>
-                  <Desc>학습 자료를 첨부하세요.</Desc>
+                  <Inner1>
+                    <Title>파일을 드래그하거나 클릭하여 업로드</Title>
+                    <Desc>PDF 파일만 지원합니다.</Desc>
+                  </Inner1>
                 </Inner>
               </SquareChip>
+            )}
 
-              <SquareChip onClick={() => {}}>
-                <Inner>
-                  <Icon>
-                    <PencilIcon />
-                  </Icon>
-                  <Title>설스터디 칼럼 링크</Title>
-                  <Desc>칼럼 URL을 입력하세요.</Desc>
-                </Inner>
-              </SquareChip>
-            </ResourceGrid>
+            {resourceMode === "FILE" && (
+              <ResourceRow>
+                <ResourceInput>
+                  <Input value={fileName} onChange={() => {}} readOnly />
+                </ResourceInput>
+                <ButtonMinus onClick={removeResource} />
+              </ResourceRow>
+            )}
+
+            {resourceMode === "CHOICE" && (
+              <ResourceGrid>
+                <SquareChip onClick={openFilePicker}>
+                  <Inner>
+                    <Icon>
+                      <UploadIcon />
+                    </Icon>
+                    <Inner1>
+                      <Title>PDF 파일 업로드</Title>
+                      <Desc>학습 자료를 첨부하세요.</Desc>
+                    </Inner1>
+                  </Inner>
+                </SquareChip>
+
+                <SquareChip
+                  onClick={() => {
+                    setFileName("");
+                    setLinkUrl("");
+                    setResourceMode("LINK");
+                  }}
+                >
+                  <Inner>
+                    <Icon>
+                      <PencilIcon />
+                    </Icon>
+                    <Inner1>
+                      <Title>설스터디 칼럼 링크</Title>
+                      <Desc>칼럼 URL을 입력하세요.</Desc>
+                    </Inner1>
+                  </Inner>
+                </SquareChip>
+              </ResourceGrid>
+            )}
+
+            {resourceMode === "LINK" && (
+              <ResourceRow>
+                <ResourceInput>
+                  <Input
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    placeholder="https://seolstudy.com/column/..."
+                  />
+                </ResourceInput>
+                <ButtonMinus onClick={removeResource} />
+              </ResourceRow>
+            )}
           </RowBody>
         </Row>
       </FormGrid>
@@ -235,7 +400,6 @@ const RowLabel = styled.div`
 
 const Required = styled.span`
   color: var(--color-primary-500);
-  margin-left: 4px;
 `;
 
 const RowBody = styled.div`
@@ -296,6 +460,24 @@ const AddBtn = styled.div`
   }
 `;
 
+const AddedList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+`;
+
+const AddedItem = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 12px;
+  align-items: start;
+`;
+
+const AddedInputWrap = styled.div`
+  width: 100%;
+`;
+
 const ResourceGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -313,30 +495,43 @@ const Inner = styled.div`
   gap: 10px;
 `;
 
+const Inner1 = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+`;
+
 const Icon = styled.div`
-  width: 28px;
-  height: 28px;
   display: grid;
   place-items: center;
 
   svg {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
 
-  /* svg path 색 바꾸고 싶으면 */
   svg path {
     stroke: var(--color-blue-500);
   }
 `;
 
+const ResourceRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 12px;
+  align-items: center;
+`;
+
+const ResourceInput = styled.div`
+  width: 100%;
+`;
+
 const Title = styled.div`
   ${typography.t16sb}
-  color: var(--color-black);
 `;
 
 const Desc = styled.div`
-  ${typography.t12r}
+  ${typography.t14r}
   color: var(--color-gray-500);
 `;
 

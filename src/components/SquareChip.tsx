@@ -1,29 +1,25 @@
 import styled from "styled-components";
-import type { ReactNode } from "react";
+import type { ReactNode, ButtonHTMLAttributes } from "react";
 
-interface Props {
+interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   label?: string;
   children?: ReactNode;
   selected?: boolean;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
 }
 
 const SquareChip = ({
   label,
   children,
   selected = false,
-  onClick,
-  disabled = false,
   className,
+  ...buttonProps
 }: Props) => {
   return (
     <Btn
-      onClick={onClick}
-      disabled={disabled}
+      type="button"
       className={className}
       $selected={selected}
+      {...buttonProps}
     >
       {children ?? label}
     </Btn>
