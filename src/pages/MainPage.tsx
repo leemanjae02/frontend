@@ -368,6 +368,7 @@ const MainPage = () => {
                   <TodoCard
                     key={task.taskId}
                     title={task.taskName}
+                    subject={subject as SubjectKey}
                     done={task.completed}
                     onToggleDone={() =>
                       handleToggleDone(

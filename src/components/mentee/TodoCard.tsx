@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import Checkbox from "../Checkbox";
 import { typography } from "../../styles/typography";
+import type { SubjectKey } from "../SubjectAddButton";
 
 import cameraIconSrc from "../../assets/images/icon/camera_blue.svg";
 import fileIconSrc from "../../assets/images/icon/report_blue.svg";
@@ -12,6 +13,7 @@ type FeedbackState = "NONE" | "UNREAD" | "READ";
 
 export interface TodoCardProps {
   title: string;
+  subject?: SubjectKey;
 
   done: boolean;
   onToggleDone?: () => void;
@@ -29,8 +31,15 @@ export interface TodoCardProps {
   className?: string;
 }
 
+const SUBJECT_COLORS: Record<SubjectKey, string> = {
+  KOREAN: "var(--color-orange-500)",
+  ENGLISH: "var(--color-pink-500)",
+  MATH: "var(--color-blue-500)",
+};
+
 const TodoCard = ({
   title,
+  subject,
   done,
   onToggleDone,
   onClick,
@@ -52,6 +61,7 @@ const TodoCard = ({
         : null;
 
   const hasMeta = hasPhoto || hasFile;
+  const checkedColor = subject ? SUBJECT_COLORS[subject] : undefined;
 
   return (
     <Wrap
@@ -64,6 +74,7 @@ const TodoCard = ({
         <Checkbox
           checked={done}
           onChange={onToggleDone ? () => onToggleDone() : undefined}
+          checkedColor={checkedColor}
         />
       </Left>
 
