@@ -7,12 +7,12 @@ import TrashIcon from "../../assets/images/icon/delete-1.svg?react";
 import DangerIcon from "../../assets/images/icon/info.svg?react";
 import ButtonSmall from "../ButtonSmall";
 import TodoDetailHeader from "./TodoDetailHeader";
-import Marker from "./Marker";
 import QuestionForm from "./QuestionForm";
 import type { QuestionMarker } from "../../api/file";
 import type { SubjectKey } from "../SubjectAddButton";
 
 import Indicator from "./Indicator";
+import NumberBadge from "../NumberBadge";
 
 // 이미지별 마커 데이터 타입
 export interface ImageMarkerData {
@@ -157,6 +157,14 @@ const StyledIndicatorWrapper = styled.div`
   width: 100%;
   display: flex;
   justify-content: center;
+`;
+
+const MarkerSpot = styled.div<{ $x: number; $y: number }>`
+  position: absolute;
+  left: ${({ $x }) => $x}%;
+  top: ${({ $y }) => $y}%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
 `;
 
 const StyledTrashIcon = styled(TrashIcon)`
@@ -530,13 +538,17 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
                     />
                     {idx === currentIndex &&
                       data.markers.map((marker, mIdx) => (
-                        <Marker
+                        <MarkerSpot
                           key={mIdx}
-                          x={marker.percentX}
-                          y={marker.percentY}
-                          number={mIdx + 1}
-                          onClick={() => handleMarkerClick(mIdx)}
-                        />
+                          $x={marker.percentX}
+                          $y={marker.percentY}
+                        >
+                          <NumberBadge
+                            value={mIdx + 1}
+                            variant="question"
+                            onClick={() => handleMarkerClick(mIdx)}
+                          />
+                        </MarkerSpot>
                       ))}
                   </ImageWrapper>
                 </ImageSlide>
