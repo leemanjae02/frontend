@@ -42,7 +42,7 @@ const StudyForm = ({
   showDate = mode === "todo",
   showGoalMinutes = mode === "todo",
   showTaskList = mode === "todo",
-  resourceStartMode = "EMPTY",
+  // resourceStartMode = "EMPTY",
 }: Props) => {
   const [subject, setSubject] = useState<SubjectKey>("KOREAN");
   const [usePeriod, setUsePeriod] = useState(false);
@@ -53,8 +53,7 @@ const StudyForm = ({
   const [taskNames, setTaskNames] = useState<string[]>([]);
   const [resourceTitle, setResourceTitle] = useState("");
   const [goalMinutes, setGoalMinutes] = useState("");
-  const [resourceMode, setResourceMode] =
-    useState<ResourceMode>(resourceStartMode);
+  const [resourceMode, setResourceMode] = useState<ResourceMode>("CHOICE");
   const [fileName, setFileName] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -408,36 +407,15 @@ const StudyForm = ({
               onChange={(e) => applyFile(e.target.files?.[0])}
             />
 
-            {resourceMode === "EMPTY" && (
-              <SquareChip
-                onClick={openFilePicker}
-                onDragOver={onDragOver}
-                onDrop={onDropUpload}
-              >
-                <Inner>
-                  <Icon>
-                    <UploadIcon />
-                  </Icon>
-                  <Inner1>
-                    <Title>파일을 드래그하거나 클릭하여 업로드</Title>
-                    <Desc>PDF 파일만 지원합니다.</Desc>
-                  </Inner1>
-                </Inner>
-              </SquareChip>
-            )}
-
-            {resourceMode === "FILE" && (
-              <ResourceRow>
-                <ResourceInput>
-                  <Input value={fileName} onChange={() => {}} readOnly />
-                </ResourceInput>
-                <ButtonMinus onClick={removeResource} />
-              </ResourceRow>
-            )}
-
             {resourceMode === "CHOICE" && (
               <ResourceGrid>
-                <SquareChip onClick={openFilePicker}>
+                <SquareChip
+                  onClick={() => {
+                    setFileName("");
+                    setLinkUrl("");
+                    setResourceMode("EMPTY");
+                  }}
+                >
                   <Inner>
                     <Icon>
                       <UploadIcon />
@@ -467,6 +445,33 @@ const StudyForm = ({
                   </Inner>
                 </SquareChip>
               </ResourceGrid>
+            )}
+
+            {resourceMode === "EMPTY" && (
+              <SquareChip
+                onClick={openFilePicker}
+                onDragOver={onDragOver}
+                onDrop={onDropUpload}
+              >
+                <Inner>
+                  <Icon>
+                    <UploadIcon />
+                  </Icon>
+                  <Inner1>
+                    <Title>파일을 드래그하거나 클릭하여 업로드</Title>
+                    <Desc>PDF 파일만 지원합니다.</Desc>
+                  </Inner1>
+                </Inner>
+              </SquareChip>
+            )}
+
+            {resourceMode === "FILE" && (
+              <ResourceRow>
+                <ResourceInput>
+                  <Input value={fileName} onChange={() => {}} readOnly />
+                </ResourceInput>
+                <ButtonMinus onClick={removeResource} />
+              </ResourceRow>
             )}
 
             {resourceMode === "LINK" && (

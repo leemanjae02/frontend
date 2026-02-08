@@ -20,6 +20,10 @@ const ResourceSection = ({ className, rows, onEdit, onDelete }: Props) => {
 
   const data = rows ?? mockMentorResources;
 
+  const goDetail = (row: MentorResourceRow) => {
+    navigate(`/mentor/mentees/${menteeId}/resources/${row.resourceId}`);
+  };
+
   return (
     <Wrap className={className}>
       <Top>
@@ -38,6 +42,7 @@ const ResourceSection = ({ className, rows, onEdit, onDelete }: Props) => {
 
       <ResourceListTable
         rows={data}
+        onRowClick={goDetail}
         onEdit={(row) => {
           onEdit?.(row);
           alert(`수정: ${row.title}`);
