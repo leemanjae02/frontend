@@ -7,10 +7,12 @@ import TrashIcon from "../../assets/images/icon/delete-1.svg?react";
 import DangerIcon from "../../assets/images/icon/info.svg?react";
 import ButtonSmall from "../ButtonSmall";
 import TodoDetailHeader from "./TodoDetailHeader";
-import Marker from "./Marker";
 import QuestionForm from "./QuestionForm";
 import type { QuestionMarker } from "../../api/file";
 import type { SubjectKey } from "../SubjectAddButton";
+
+import Indicator from "./Indicator";
+import NumberBadge from "../NumberBadge";
 
 // 이미지별 마커 데이터 타입
 export interface ImageMarkerData {
@@ -103,17 +105,20 @@ const EmptyState = styled.div`
   margin-bottom: 60px;
 `;
 
-const CarouselContainer = styled.div`
+const CarouselContainer = styled.div<{ $isDragging: boolean }>`
   flex: 1;
   display: flex;
   align-items: center;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: ${({ $isDragging }) =>
+    $isDragging ? "none" : "x mandatory"};
   padding-bottom: 40px;
 
   &::-webkit-scrollbar {
     display: none;
   }
+
+  cursor: ${({ $isDragging }) => ($isDragging ? "grabbing" : "grab")};
 `;
 
 const ImageSlide = styled.div`
@@ -145,22 +150,33 @@ const PreviewImg = styled.img`
   -webkit-user-drag: none;
 `;
 
-const Indicators = styled.div`
+const StyledIndicatorWrapper = styled.div`
   position: absolute;
   bottom: 24px;
   left: 0;
   width: 100%;
   display: flex;
   justify-content: center;
-  gap: 8px;
 `;
 
-const Dot = styled.div<{ $active: boolean }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: ${({ $active }) => ($active ? "#00C471" : "#E0E0E0")};
-  transition: all 0.2s;
+const MarkerSpot = styled.div<{ $x: number; $y: number }>`
+  position: absolute;
+  left: ${({ $x }) => $x}%;
+  top: ${({ $y }) => $y}%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+`;
+
+const StyledTrashIcon = styled(TrashIcon)`
+  path {
+    stroke: var(--color-primary-500);
+  }
+`;
+
+const StyledDangerIcon = styled(DangerIcon)`
+  path {
+    stroke: var(--color-error);
+  }
 `;
 
 const Footer = styled.div`
@@ -247,6 +263,13 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
+  // 드래그 관련 상태 및 Refs
+  const [isDragging, setIsDragging] = useState(false);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const dragStartPos = useRef({ x: 0, y: 0 }); // 클릭 vs 드래그 구분용
+
   const MAX_IMAGES = 10;
   const hasImages = imageData.length > 0;
 
@@ -307,11 +330,43 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
 
   // 캐러셀 스크롤 처리
   const handleScroll = () => {
+    // 드래그 중에는 인덱스 업데이트를 건너뛰어 성능 최적화 (선택 사항)
     if (carouselRef.current) {
-      const scrollLeft = carouselRef.current.scrollLeft;
+      const scrollLeftVal = carouselRef.current.scrollLeft;
       const width = carouselRef.current.offsetWidth;
-      const newIndex = Math.round(scrollLeft / width);
+      const newIndex = Math.round(scrollLeftVal / width);
       setCurrentIndex(newIndex);
+    }
+  };
+
+  // 드래그 이벤트 핸들러
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    isDown.current = true;
+    setIsDragging(true); // 스냅 해제 및 커서 변경
+    if (carouselRef.current) {
+      startX.current = e.pageX - carouselRef.current.offsetLeft;
+      scrollLeft.current = carouselRef.current.scrollLeft;
+      dragStartPos.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    setIsDragging(false); // 스냅 복구
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    setIsDragging(false); // 스냅 복구
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDown.current) return;
+    e.preventDefault();
+    if (carouselRef.current) {
+      const x = e.pageX - carouselRef.current.offsetLeft;
+      const walk = (x - startX.current) * 1.5; // 스크롤 속도 조절
+      carouselRef.current.scrollLeft = scrollLeft.current - walk;
     }
   };
 
@@ -328,8 +383,25 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     setShowLimitWarning(false);
   };
 
+  const handleIndicatorChange = (index: number) => {
+    if (carouselRef.current) {
+      const width = carouselRef.current.offsetWidth;
+      carouselRef.current.scrollTo({
+        left: width * index,
+        behavior: "smooth",
+      });
+    }
+  };
+
   // 이미지 클릭 - 마커 위치 지정
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    // 드래그 여부 확인 (5px 이상 움직였으면 클릭 무시)
+    const dist = Math.sqrt(
+      Math.pow(e.clientX - dragStartPos.current.x, 2) +
+        Math.pow(e.clientY - dragStartPos.current.y, 2),
+    );
+    if (dist > 5) return;
+
     const img = e.currentTarget;
     const rect = img.getBoundingClientRect();
     const percentX = ((e.clientX - rect.left) / rect.width) * 100;
@@ -442,7 +514,15 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
         ) : (
           <>
             <HelpText>사진을 클릭하여 질문을 등록할 수 있어요</HelpText>
-            <CarouselContainer ref={carouselRef} onScroll={handleScroll}>
+            <CarouselContainer
+              ref={carouselRef}
+              $isDragging={isDragging}
+              onScroll={handleScroll}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+            >
               {imageData.map((data, idx) => (
                 <ImageSlide key={idx}>
                   <ImageWrapper>
@@ -458,23 +538,29 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
                     />
                     {idx === currentIndex &&
                       data.markers.map((marker, mIdx) => (
-                        <Marker
+                        <MarkerSpot
                           key={mIdx}
-                          x={marker.percentX}
-                          y={marker.percentY}
-                          number={mIdx + 1}
-                          onClick={() => handleMarkerClick(mIdx)}
-                        />
+                          $x={marker.percentX}
+                          $y={marker.percentY}
+                        >
+                          <NumberBadge
+                            value={mIdx + 1}
+                            variant="question"
+                            onClick={() => handleMarkerClick(mIdx)}
+                          />
+                        </MarkerSpot>
                       ))}
                   </ImageWrapper>
                 </ImageSlide>
               ))}
             </CarouselContainer>
-            <Indicators>
-              {imageData.map((_, idx) => (
-                <Dot key={idx} $active={idx === currentIndex} />
-              ))}
-            </Indicators>
+            <StyledIndicatorWrapper>
+              <Indicator
+                count={imageData.length}
+                activeIndex={currentIndex}
+                onChange={handleIndicatorChange}
+              />
+            </StyledIndicatorWrapper>
           </>
         )}
       </Content>
@@ -482,14 +568,14 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
       <Footer>
         {showLimitWarning && (
           <WarningToast>
-            <DangerIcon stroke="#e53935" />
+            <StyledDangerIcon />
             <span>사진은 한 번에 10장까지 추가할 수 있어요.</span>
           </WarningToast>
         )}
 
         {hasImages && (
           <DeleteButton onClick={handleDelete}>
-            <TrashIcon width={24} height={24} />
+            <StyledTrashIcon width={24} height={24} />
           </DeleteButton>
         )}
 

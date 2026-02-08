@@ -7,7 +7,7 @@ import cameraIconSrc from "../../assets/images/icon/camera_blue.svg";
 import fileIconSrc from "../../assets/images/icon/report_blue.svg";
 import feedbackUnreadIconSrc from "../../assets/images/icon/chat_blue.svg";
 import feedbackReadIconSrc from "../../assets/images/icon/chat_gray.svg";
-import mentorIconSrc from "../../assets/images/icon/badge_mentor.svg";
+import TeacherIcon from "../../assets/images/icon/teacher.svg?react";
 
 type FeedbackState = "NONE" | "UNREAD" | "READ";
 
@@ -57,8 +57,8 @@ const TodoCard = ({
     feedback === "UNREAD"
       ? feedbackUnreadIconSrc
       : feedback === "READ"
-        ? feedbackReadIconSrc
-        : null;
+      ? feedbackReadIconSrc
+      : null;
 
   const hasMeta = hasPhoto || hasFile;
   const checkedColor = subject ? SUBJECT_COLORS[subject] : undefined;
@@ -94,9 +94,9 @@ const TodoCard = ({
 
       <Right $hasMeta={hasMeta}>
         {fromMentor ? (
-          <MentorIconWrap>
-            <MentorIcon src={mentorIconSrc} alt="" />
-          </MentorIconWrap>
+          <MentorIconCircle $color={checkedColor || "var(--color-gray-400)"}>
+            <StyledTeacherIcon />
+          </MentorIconCircle>
         ) : null}
       </Right>
     </Wrap>
@@ -194,16 +194,24 @@ const Right = styled.div<{ $hasMeta: boolean }>`
   align-items: ${({ $hasMeta }) => ($hasMeta ? "flex-start" : "center")};
 `;
 
-const MentorIconWrap = styled.div`
-  display: inline-flex;
+const MentorIconCircle = styled.div<{ $color: string }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color};
+  display: flex;
   align-items: center;
   justify-content: center;
 `;
 
-const MentorIcon = styled.img`
-  width: 32px;
-  height: 32px;
+const StyledTeacherIcon = styled(TeacherIcon)`
+  width: 20px;
+  height: 20px;
   display: block;
+
+  path {
+    stroke: var(--color-white);
+  }
 `;
 
 export default TodoCard;

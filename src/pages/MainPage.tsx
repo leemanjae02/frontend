@@ -31,7 +31,7 @@ import FeedbackDetailOverlay from "../components/mentee/FeedbackDetailOverlay";
 const MobileScreen = styled.div`
   min-width: 375px;
   max-width: 430px;
-  height: 100vh;
+  height: 100dvh;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -230,7 +230,7 @@ const MainPage = () => {
   const handleSavePhotos = async (
     images: string[],
     files: File[],
-    markersData: ImageMarkerData[],
+    markersData: ImageMarkerData[]
   ) => {
     setUploadedImages(images);
     setUploadedFiles(files);
@@ -238,7 +238,7 @@ const MainPage = () => {
     if (files.length > 0 && selectedTaskId) {
       try {
         const uploadResults = await Promise.all(
-          files.map((file) => uploadFile(file, "/proof-shots")),
+          files.map((file) => uploadFile(file, "/proof-shots"))
         );
 
         const proofShots = uploadResults.map((result, idx) => ({
@@ -260,7 +260,7 @@ const MainPage = () => {
   const handleToggleDone = (
     taskId: number,
     taskName: string,
-    isCompleted: boolean,
+    isCompleted: boolean
   ) => {
     if (isCompleted) {
       handleCompleteWithoutModal(taskId);
@@ -287,7 +287,7 @@ const MainPage = () => {
       await toggleTaskComplete(
         pendingCompleteTask.taskId,
         selectedDate,
-        actualMinutes,
+        actualMinutes
       );
       await refreshTasks();
       setIsCompletionModalOpen(false);
@@ -352,7 +352,7 @@ const MainPage = () => {
         <SubjectListWrapper>
           {SUBJECT_ORDER.map((subject) => {
             const subjectTasks = tasks.filter(
-              (task) => task.taskSubject === subject,
+              (task) => task.taskSubject === subject
             );
             const visibleTasks = isToggle
               ? subjectTasks
@@ -370,11 +370,21 @@ const MainPage = () => {
                     title={task.taskName}
                     subject={subject as SubjectKey}
                     done={task.completed}
+                    fromMentor={task.createdBy === "ROLE_MENTOR"}
+                    hasFile={task.hasWorksheet}
+                    hasPhoto={task.hasProofShot}
+                    feedback={
+                      task.hasFeedback
+                        ? task.readFeedback
+                          ? "READ"
+                          : "UNREAD"
+                        : "NONE"
+                    }
                     onToggleDone={() =>
                       handleToggleDone(
                         task.taskId,
                         task.taskName,
-                        task.completed,
+                        task.completed
                       )
                     }
                     onClick={() => handleCardClick(task.taskId)}
@@ -413,7 +423,10 @@ const MainPage = () => {
       {/* 사진 업로드 오버레이 */}
       <PhotoUploadOverlay
         isOpen={isPhotoUploadOpen}
-        onClose={() => setIsPhotoUploadOpen(false)}
+        onClose={() => {
+          setIsPhotoUploadOpen(false);
+          closeSheet();
+        }}
         initialImages={uploadedImages}
         initialFiles={uploadedFiles}
         onSave={handleSavePhotos}

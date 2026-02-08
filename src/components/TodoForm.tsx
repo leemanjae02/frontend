@@ -10,7 +10,7 @@ export type TodoFormMode = "create" | "edit";
 export interface TodoFormProps {
   mode: TodoFormMode;
   taskId?: number | null;
-  onSubmit?: (data: { name: string; time: string }) => void;
+  onSubmit?: (data: { name: string; time: string }) => Promise<void> | void;
 }
 
 const Title = styled.h2`
@@ -40,9 +40,13 @@ const TodoForm = ({
 }: TodoFormProps) => {
   const [name, setName] = useState("");
   const [time, setTime] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (mode === "edit" && taskId) {
+    if (mode === "create") {
+      setName("");
+      setTime("");
+    } else if (mode === "edit" && taskId) {
       let isMounted = true;
       const loadDetail = async () => {
         try {
@@ -66,12 +70,18 @@ const TodoForm = ({
   const titleText = mode === "create" ? "할 일 등록하기" : "할 일 수정하기";
   const submitButtonText = mode === "create" ? "등록하기" : "수정하기";
 
-  const handleSubmit = () => {
-    if (!name || !time) return;
-    onSubmit?.({ name, time });
+  const handleSubmit = async () => {
+    if (!name || !time || isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
+      await onSubmit?.({ name, time });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const isButtonDisabled = !name || !time;
+  const isButtonDisabled = !name || !time || isSubmitting;
 
   return (
     <>
@@ -87,6 +97,7 @@ const TodoForm = ({
             maxLength={MAX_NAME_LENGTH}
             showCount={true}
             countPosition="top"
+            disabled={isSubmitting}
           />
         </FieldWrapper>
 
@@ -97,6 +108,7 @@ const TodoForm = ({
             placeholder="30"
             value={time}
             onChange={(e) => setTime(e.target.value)}
+            disabled={isSubmitting}
           />
         </FieldWrapper>
 

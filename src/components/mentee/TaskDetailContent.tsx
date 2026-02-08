@@ -4,6 +4,7 @@ import { typography } from "../../styles/typography";
 import TeacherIcon from "../../assets/images/icon/teacher.svg?react";
 import ChatIcon from "../../assets/images/icon/chat.svg?react";
 import TaskAttachment from "./TaskAttachment";
+import type { SubjectKey } from "../SubjectAddButton";
 
 export interface AttachmentData {
   id: number | string;
@@ -20,6 +21,7 @@ export interface TaskDetailData {
   targetTime: number;
   actualTime?: number;
   isMentorAssigned: boolean;
+  hasFeedback: boolean;
   attachments?: AttachmentData[];
   mentorFeedback?: {
     mentorName: string;
@@ -37,6 +39,12 @@ interface TaskDetailProps {
   // 임시: 피드백 UI 강제 노출
   forceShowFeedbackDetail?: boolean;
 }
+
+const SUBJECT_COLORS: Record<SubjectKey, string> = {
+  KOREAN: "var(--color-orange-500)",
+  ENGLISH: "var(--color-pink-500)",
+  MATH: "var(--color-blue-500)",
+};
 
 const Container = styled.div`
   display: flex;
@@ -58,22 +66,21 @@ const Header = styled.div`
   gap: 8px;
 `;
 
-const MentorBadge = styled.div`
+const MentorBadge = styled.div<{ $bgColor: string }>`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  width: fit-content;
-  padding: 4px;
-  background-color: var(--color-primary-700);
-  border-radius: 100px;
-  color: var(--color-primary-500);
-  span {
-    ${typography.t12sb}
-    line-height: 1;
-    margin-bottom: 1px;
-  }
-  svg path {
-    stroke: var(--color-white);
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: ${({ $bgColor }) => $bgColor};
+  border-radius: 50%;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    path {
+      stroke: var(--color-white);
+    }
   }
 `;
 
@@ -103,6 +110,7 @@ const InfoRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 8px 0;
 `;
 
 const Label = styled.span`
@@ -194,17 +202,19 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
   onDelete,
   forceShowFeedbackDetail = false,
 }) => {
-  const hasFeedback = !!data.mentorFeedback;
-  const shouldRenderFeedbackBox = hasFeedback || forceShowFeedbackDetail;
+  const hasFeedbackContent = !!data.mentorFeedback;
+  const shouldRenderFeedbackBox = hasFeedbackContent || forceShowFeedbackDetail;
 
-  const shouldShowUpload = !hasFeedback;
+  const shouldShowUpload = !data.hasFeedback;
+  const subjectColor =
+    SUBJECT_COLORS[data.subjectKey as SubjectKey] || "var(--color-gray-400)";
 
   return (
     <Container>
       {/* 1. Header */}
       <Header>
         {data.isMentorAssigned && (
-          <MentorBadge>
+          <MentorBadge $bgColor={subjectColor}>
             <TeacherIcon />
           </MentorBadge>
         )}
@@ -255,12 +265,12 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
         <FeedbackBox>
           <FeedbackHeader>
             <ChatIcon />
-            {hasFeedback
+            {hasFeedbackContent
               ? `${data.mentorFeedback!.mentorName} 멘토의 피드백`
               : "이서영 멘토 피드백"}
           </FeedbackHeader>
           <FeedbackContent $expanded={false}>
-            {hasFeedback
+            {hasFeedbackContent
               ? data.mentorFeedback!.content
               : "현재는 임시 데이터로 피드백 화면을 확인할 수 있어요."}
           </FeedbackContent>
