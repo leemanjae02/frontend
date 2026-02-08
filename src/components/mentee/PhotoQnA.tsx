@@ -69,7 +69,9 @@ const PhotoQnA = ({
 
 const Wrap = styled.section`
   width: 100%;
-  border-bottom: 1px solid var(--color-gray-100);
+  // border-bottom: 1px rgba(231, 231, 231, 0.5) solid;
+  border-bottom: 1px var(--color-gray-100) solid;
+  // margin-bottom: 70px;
 `;
 
 const Header = styled.div`
@@ -105,7 +107,7 @@ const Chevron = styled.img`
 `;
 
 const Body = styled.div`
-  padding: 10px 16px 14px;
+  padding: 0 16px 10px;
   text-align: left;
 `;
 
@@ -121,7 +123,7 @@ const List = styled.div`
 
 const Item = styled.div`
   padding: 14px 0;
-  border-top: 1px solid var(--color-gray-100);
+  // border-bottom: 1px rgba(231, 231, 231, 0.5) solid;
 
   display: flex;
   flex-direction: column;
@@ -151,7 +153,7 @@ const Badge = styled.div`
 `;
 
 const QuestionText = styled.div`
-  ${typography.t12r}
+  ${typography.t14r}
   color: var(--color-black);
   white-space: pre-wrap;
 `;
@@ -163,14 +165,14 @@ const AnswerBlock = styled.div`
 `;
 
 const Branch = styled.span`
-  ${typography.t12r}
+  ${typography.t14r}
   color: var(--color-gray-400);
   flex: 0 0 auto;
   padding-left: 15px;
 `;
 
 const AnswerText = styled.div`
-  ${typography.t12r}
+  ${typography.t14r}
   color: var(--color-gray-700);
   white-space: pre-wrap;
 `;

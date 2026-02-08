@@ -36,7 +36,7 @@ const Wrap = styled.div`
 
 const DotButton = styled.button<{ $active: boolean }>`
   width: 6px;
-  height: 6.1px;
+  height: 5.8px;
 
   border-radius: 100%;
 

@@ -33,6 +33,9 @@ interface TaskDetailProps {
   onOpenFeedbackDetail?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+
+  // 임시: 피드백 UI 강제 노출
+  forceShowFeedbackDetail?: boolean;
 }
 
 const Container = styled.div`
@@ -115,7 +118,7 @@ const Value = styled.span`
 const FeedbackBox = styled.div`
   border-top: 1px solid var(--color-gray-100);
   background-color: var(--color-white);
-  padding: 16px;
+  padding: 16px 0 0 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -125,7 +128,7 @@ const FeedbackHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  ${typography.t14sb}
+  ${typography.t16sb}
   color: var(--color-blue-500);
   svg path {
     stroke: var(--color-blue-500);
@@ -133,7 +136,7 @@ const FeedbackHeader = styled.div`
 `;
 
 const FeedbackContent = styled.p<{ $expanded: boolean }>`
-  ${typography.t14sb}
+  ${typography.t14r}
   color: var(--color-gray-800);
   margin: 0;
   line-height: 1.5;
@@ -151,9 +154,8 @@ const FeedbackContent = styled.p<{ $expanded: boolean }>`
 const MoreButton = styled.button`
   background: none;
   border: none;
-  color: var(--color-gray-500);
-  ${typography.t12sb}
-  text-decoration: underline;
+  color: var(--color-gray-400);
+  ${typography.t12r}
   cursor: pointer;
   align-self: flex-end;
   padding: 4px;
@@ -190,8 +192,12 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
   onOpenFeedbackDetail,
   onEdit,
   onDelete,
+  forceShowFeedbackDetail = false,
 }) => {
-  const shouldShowUpload = !data.mentorFeedback;
+  const hasFeedback = !!data.mentorFeedback;
+  const shouldRenderFeedbackBox = hasFeedback || forceShowFeedbackDetail;
+
+  const shouldShowUpload = !hasFeedback;
 
   return (
     <Container>
@@ -245,14 +251,18 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
       </InfoList>
 
       {/* 4. Feedback */}
-      {data.mentorFeedback && (
+      {shouldRenderFeedbackBox && (
         <FeedbackBox>
           <FeedbackHeader>
             <ChatIcon />
-            {data.mentorFeedback.mentorName} 멘토의 피드백
+            {hasFeedback
+              ? `${data.mentorFeedback!.mentorName} 멘토의 피드백`
+              : "이서영 멘토 피드백"}
           </FeedbackHeader>
           <FeedbackContent $expanded={false}>
-            {data.mentorFeedback.content}
+            {hasFeedback
+              ? data.mentorFeedback!.content
+              : "현재는 임시 데이터로 피드백 화면을 확인할 수 있어요."}
           </FeedbackContent>
           <MoreButton
             type="button"

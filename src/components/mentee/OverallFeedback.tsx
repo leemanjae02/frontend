@@ -15,10 +15,13 @@ interface Props {
 
 const OverallFeedback = ({
   mentorName,
+  details,
   defaultOpen = false,
   className,
 }: Props) => {
   const [open, setOpen] = useState(defaultOpen);
+
+  const hasDetails = (details ?? "").trim().length > 0;
 
   return (
     <Wrap className={className}>
@@ -37,14 +40,17 @@ const OverallFeedback = ({
         </Content>
       </Header>
 
-      {open ? <BodyTitle>피드백 내용 사항</BodyTitle> : null}
+      {open ? <BodyTitle>{hasDetails ? details : null}</BodyTitle> : null}
     </Wrap>
   );
 };
 
 const Wrap = styled.section`
   width: 100%;
-  border-bottom: 1px rgba(231, 231, 231, 0.5) solid;
+  // border-bottom: 1px rgba(231, 231, 231, 0.5) solid;
+  border-bottom: 1px var(--color-gray-100) solid;
+
+  margin-bottom: 30px;
 `;
 
 const Header = styled.div`
@@ -113,11 +119,9 @@ const Summary = styled.div`
 `;
 
 const BodyTitle = styled.div`
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 25.2px;
+  ${typography.t14r}
   color: var(--color-gray-600);
-  padding: 0 0 12px 19px;
+  padding: 0 19px 15px 19px;
   text-align: left;
 `;
 

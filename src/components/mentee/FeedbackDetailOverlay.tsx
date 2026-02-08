@@ -25,7 +25,7 @@ interface BadgeVM {
 
 interface PhotoFeedbackItemVM {
   index: number;
-  title: string;
+  title: string | null;
   detail: string;
 }
 
@@ -55,8 +55,10 @@ interface OverlayVM {
   >;
 }
 
-// 수정 후 지울 예정
+// 파일 다운로드 api 연동 후 지울 예정
 function getProofShotImageUrl(imageFileId: number) {
+  if (typeof imageFileId === "string") return imageFileId;
+
   return `${import.meta.env.VITE_API_URL}/files/${imageFileId}`;
 }
 
@@ -113,7 +115,9 @@ function transformToOverlayVM(api: TaskFeedbackDetailData): OverlayVM {
     const feedbackItems: PhotoFeedbackItemVM[] = registeredFeedbacks.map(
       (f) => ({
         index: f.feedbackNumber,
-        title: f.starred ? "중요 피드백" : "피드백",
+        title: f.starred
+          ? "중요한 피드백이에요. 꼭 읽고 학습에 적용해보세요."
+          : null,
         detail: f.content,
       }),
     );
@@ -154,8 +158,6 @@ const FeedbackDetailOverlay = ({
   subject,
   title,
 }: Props) => {
-  if (!isOpen) return null;
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -199,7 +201,11 @@ const FeedbackDetailOverlay = ({
     };
   }, [isOpen, taskId]);
 
+  // if (!isOpen) return null;
+
   const hasPhotos = (data?.photos?.length ?? 0) > 0;
+
+  const shouldShowOverall = hasPhotos ? activePhotoIndex === 0 : true;
 
   const activeBadges = useMemo(() => {
     if (!data) return [];
@@ -261,7 +267,13 @@ const FeedbackDetailOverlay = ({
               </PhotoArea>
             ) : null}
 
-            <OverallFeedback mentorName={data.overallMentorName} defaultOpen />
+            {shouldShowOverall ? (
+              <OverallFeedback
+                mentorName={data.overallMentorName}
+                details={data.overallComment}
+                defaultOpen
+              />
+            ) : null}
 
             {/* 사진별 질문(QnA): 해당 사진에 질문이 있을 때만 */}
             {shouldShowPhotoQnA ? (
@@ -329,15 +341,14 @@ const StateText = styled.div`
 `;
 
 const PhotoArea = styled.section`
-  padding: 12px 16px 8px;
+  padding: 16px;
 `;
 
 const PhotoFrame = styled.div`
   position: relative;
   width: 100%;
-  border-radius: 10px;
   overflow: hidden;
-  background: var(--color-gray-100);
+  background: color-mix(in srgb, var(--color-gray-100) 30%, transparent);
 `;
 
 const Photo = styled.img`
@@ -354,7 +365,7 @@ const BadgeSpot = styled.div`
 const IndicatorWrap = styled.div`
   display: flex;
   justify-content: center;
-  padding-top: 10px;
+  padding-top: 16px;
 `;
 
 const Sections = styled.div`
