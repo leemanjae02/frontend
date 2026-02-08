@@ -93,6 +93,7 @@ const TaskDetailContainer = ({
       onOpenFeedbackDetail={handleOpenFeedbackDetail}
       onEdit={onEditClick}
       onDelete={handleDelete}
+      forceShowFeedbackDetail // 임시데이터 강제 노출 (추후 삭제)
     />
   );
 };

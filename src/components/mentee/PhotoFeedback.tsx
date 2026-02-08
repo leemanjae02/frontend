@@ -7,7 +7,7 @@ import chevronUpSrc from "../../assets/images/icon/top.svg";
 
 export interface PhotoFeedbackItem {
   index: number;
-  title: string;
+  title: string | null;
   detail: string;
 }
 
@@ -63,6 +63,8 @@ const PhotoFeedback = ({
 const Wrap = styled.section`
   width: 100%;
   border-bottom: 1px solid var(--color-gray-100);
+
+  margin-bottom: 50px;
 `;
 
 const Header = styled.div`
