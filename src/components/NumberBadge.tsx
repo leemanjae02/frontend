@@ -69,7 +69,6 @@ const Badge = styled.span<{
   width: 32px;
   height: 32px;
   border-radius: 40px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;

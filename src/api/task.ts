@@ -101,6 +101,7 @@ const transformDetailData = (data: TaskDetailResponse): TaskDetailData => {
     targetTime: data.goalMinutes,
     actualTime: data.actualMinutes > 0 ? data.actualMinutes : undefined,
     isMentorAssigned: data.createdBy === "ROLE_MENTOR",
+    hasFeedback: data.hasFeedback,
     attachments: [...pdfs, ...links],
     mentorFeedback: data.generalComment
       ? {

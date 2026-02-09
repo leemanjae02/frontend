@@ -2,17 +2,26 @@ import { forwardRef, useId } from "react";
 import type { InputHTMLAttributes } from "react";
 import styled from "styled-components";
 
-import checkOn from "../assets/images/icon/checkbox_checked.svg";
-import checkOff from "../assets/images/icon/checkbox_default.svg";
+import CheckboxIcon from "../assets/images/icon/checkbox_default.svg?react";
 
 interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label?: string;
+  checkedColor?: string;
 }
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
-    { label, checked, defaultChecked, disabled, onChange, className, ...rest },
+    {
+      label,
+      checked,
+      defaultChecked,
+      disabled,
+      onChange,
+      className,
+      checkedColor,
+      ...rest
+    },
     ref
   ) => {
     const autoId = useId();
@@ -35,7 +44,11 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         />
 
         <Label htmlFor={id} $disabled={!!disabled}>
-          <Icon src={isChecked ? checkOn : checkOff} alt="" />
+          <StyledIcon
+            $isChecked={!!isChecked}
+            $checkedColor={checkedColor}
+            aria-hidden="true"
+          />
           {label ? <Text>{label}</Text> : null}
         </Label>
       </Wrapper>
@@ -76,10 +89,21 @@ const Label = styled.label<{ $disabled: boolean }>`
   opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
 `;
 
-const Icon = styled.img`
+const StyledIcon = styled(CheckboxIcon)<{
+  $isChecked: boolean;
+  $checkedColor?: string;
+}>`
   width: 24px;
   height: 24px;
   display: block;
+
+  rect {
+    fill: ${({ $isChecked, $checkedColor }) =>
+      $isChecked
+        ? $checkedColor || "var(--color-primary-500)"
+        : "var(--color-gray-200)"};
+    transition: fill 0.2s ease;
+  }
 `;
 
 const Text = styled.span`
