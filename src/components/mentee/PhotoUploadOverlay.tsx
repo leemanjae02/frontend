@@ -71,7 +71,7 @@ const ContentHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  padding: 0 16px;
   background-color: white;
 `;
 
@@ -103,6 +103,10 @@ const EmptyState = styled.div`
   color: var(--color-gray-500);
   ${typography.t14r}
   margin-bottom: 60px;
+  & > div:nth-child(1) {
+    color: var(--color-black);
+    ${typography.t16m}
+  }
 `;
 
 const CarouselContainer = styled.div<{ $isDragging: boolean }>`
@@ -112,7 +116,6 @@ const CarouselContainer = styled.div<{ $isDragging: boolean }>`
   overflow-x: auto;
   scroll-snap-type: ${({ $isDragging }) =>
     $isDragging ? "none" : "x mandatory"};
-  padding-bottom: 40px;
 
   &::-webkit-scrollbar {
     display: none;
@@ -124,26 +127,26 @@ const CarouselContainer = styled.div<{ $isDragging: boolean }>`
 const ImageSlide = styled.div`
   flex: 0 0 100%;
   width: 100%;
-  height: 80%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   scroll-snap-align: center;
-  padding: 0 20px;
   box-sizing: border-box;
 `;
 
 const ImageWrapper = styled.div`
   position: relative;
-  display: inline-block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const PreviewImg = styled.img`
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 12px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   user-select: none;
