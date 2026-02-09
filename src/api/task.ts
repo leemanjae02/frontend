@@ -1,7 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import type { TaskDetailData } from "../components/mentee/TaskDetailContent";
 import { dateUtils } from "../utils/dateUtils";
-import { mockFetchTaskFeedbackDetail } from "../mock/menteeTaskFeedback.mock";
 
 // =============================================================================
 // [SECTION 1] 할 일 목록 조회 (캘린더/리스트 화면)
@@ -268,7 +267,7 @@ export interface TaskFeedbackDetailData {
 
   proofShots: Array<{
     proofShotId: number;
-    imageFileId: any;
+    imageFileId: number;
     questions: TaskFeedbackQuestion[];
     feedbacks: TaskFeedbackItem[];
   }>;
@@ -303,30 +302,9 @@ const transformTaskFeedbackData = (
 };
 
 // 피드백 상세 조회 API 함수
-// export const fetchTaskFeedbackDetail = async (
-//   taskId: number,
-// ): Promise<TaskFeedbackDetailData> => {
-//   try {
-//     const { data } = await axiosInstance.get<TaskFeedbackResponse>(
-//       `/tasks/${taskId}/feedback`,
-//     );
-//     return transformTaskFeedbackData(data);
-//   } catch (error) {
-//     console.error("피드백 상세 조회 실패:", error);
-//     throw error;
-//   }
-// };
-
-// 임시 데이터 버전
 export const fetchTaskFeedbackDetail = async (
   taskId: number,
 ): Promise<TaskFeedbackDetailData> => {
-  const useMock = import.meta.env.VITE_USE_MOCK_FEEDBACK === "true";
-
-  if (useMock) {
-    return mockFetchTaskFeedbackDetail(taskId);
-  }
-
   try {
     const { data } = await axiosInstance.get<TaskFeedbackResponse>(
       `/tasks/${taskId}/feedback`,

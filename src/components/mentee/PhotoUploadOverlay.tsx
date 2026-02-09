@@ -13,6 +13,7 @@ import type { SubjectKey } from "../SubjectAddButton";
 
 import Indicator from "./Indicator";
 import NumberBadge from "../NumberBadge";
+import { createPortal } from "react-dom";
 
 // 이미지별 마커 데이터 타입
 export interface ImageMarkerData {
@@ -37,19 +38,21 @@ interface PhotoUploadOverlayProps {
 }
 
 const Container = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: white;
-  z-index: 9999;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
 
   transform: ${({ $isOpen }) =>
     $isOpen ? "translateY(0)" : "translateY(100%)"};
   transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+
+  pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
 `;
 
 const HeaderWrapper = styled.div`
@@ -483,7 +486,9 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     onClose();
   };
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <Container $isOpen={isOpen}>
       <HeaderWrapper>
         <TodoDetailHeader
@@ -615,7 +620,8 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
         }
         onDelete={editingMarkerIndex !== null ? handleMarkerDelete : undefined}
       />
-    </Container>
+    </Container>,
+    document.body,
   );
 };
 

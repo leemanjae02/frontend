@@ -57,20 +57,24 @@ const TodoCard = ({
     feedback === "UNREAD"
       ? feedbackUnreadIconSrc
       : feedback === "READ"
-      ? feedbackReadIconSrc
-      : null;
+        ? feedbackReadIconSrc
+        : null;
 
   const hasMeta = hasPhoto || hasFile;
   const checkedColor = subject ? SUBJECT_COLORS[subject] : undefined;
 
   return (
     <Wrap
+      type="button"
       onClick={onClick}
       disabled={disabled}
       className={className}
       $hasMeta={hasMeta}
     >
-      <Left onClick={(e) => e.stopPropagation()}>
+      <Left
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.preventDefault()}
+      >
         <Checkbox
           checked={done}
           onChange={onToggleDone ? () => onToggleDone() : undefined}

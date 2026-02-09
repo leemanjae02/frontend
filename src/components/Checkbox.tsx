@@ -4,8 +4,10 @@ import styled from "styled-components";
 
 import CheckboxIcon from "../assets/images/icon/checkbox_default.svg?react";
 
-interface CheckboxProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
+interface CheckboxProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type"
+> {
   label?: string;
   checkedColor?: string;
 }
@@ -22,7 +24,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       checkedColor,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const autoId = useId();
     const id = rest.id ?? autoId;
@@ -53,15 +55,19 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         </Label>
       </Wrapper>
     );
-  }
+  },
 );
 
 const Wrapper = styled.div`
+  position: relative;
   display: inline-flex;
 `;
 
 const HiddenCheckbox = styled.input`
   position: absolute;
+  left: 0;
+  top: 0;
+
   width: 1px;
   height: 1px;
   margin: -1px;

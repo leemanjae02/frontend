@@ -35,9 +35,6 @@ interface TaskDetailProps {
   onOpenFeedbackDetail?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-
-  // 임시: 피드백 UI 강제 노출
-  forceShowFeedbackDetail?: boolean;
 }
 
 const SUBJECT_COLORS: Record<SubjectKey, string> = {
@@ -200,12 +197,9 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
   onOpenFeedbackDetail,
   onEdit,
   onDelete,
-  forceShowFeedbackDetail = false,
 }) => {
-  const hasFeedbackContent = !!data.mentorFeedback;
-  const shouldRenderFeedbackBox = hasFeedbackContent || forceShowFeedbackDetail;
+  const shouldShowUpload = !data.mentorFeedback;
 
-  const shouldShowUpload = !data.hasFeedback;
   const subjectColor =
     SUBJECT_COLORS[data.subjectKey as SubjectKey] || "var(--color-gray-400)";
 
@@ -261,18 +255,14 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
       </InfoList>
 
       {/* 4. Feedback */}
-      {shouldRenderFeedbackBox && (
+      {data.mentorFeedback && (
         <FeedbackBox>
           <FeedbackHeader>
             <ChatIcon />
-            {hasFeedbackContent
-              ? `${data.mentorFeedback!.mentorName} 멘토의 피드백`
-              : "이서영 멘토 피드백"}
+            {data.mentorFeedback.mentorName} 멘토의 피드백
           </FeedbackHeader>
           <FeedbackContent $expanded={false}>
-            {hasFeedbackContent
-              ? data.mentorFeedback!.content
-              : "현재는 임시 데이터로 피드백 화면을 확인할 수 있어요."}
+            {data.mentorFeedback.content}
           </FeedbackContent>
           <MoreButton
             type="button"

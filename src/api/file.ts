@@ -22,7 +22,7 @@ interface FileUrlResponse {
  */
 export const uploadFile = async (
   file: File,
-  folderPath: string = "/images"
+  folderPath: string = "/images",
 ): Promise<FileUploadResponse> => {
   const formData = new FormData();
 
@@ -37,7 +37,7 @@ export const uploadFile = async (
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
 
     return response.data;
@@ -53,7 +53,7 @@ export const uploadFile = async (
  */
 export const downloadFileFromUrl = async (
   fileUrl: string,
-  fileName: string
+  fileName: string,
 ): Promise<void> => {
   try {
     const response = await axios.get(fileUrl, {
@@ -87,7 +87,7 @@ export const downloadFileFromUrl = async (
  */
 export const downloadFile = async (
   fileId: number,
-  fileName: string
+  fileName: string,
 ): Promise<void> => {
   try {
     // [Step 1] 서버에 다운로드 URL 요청 (GET /files?fileId=123)
@@ -136,7 +136,7 @@ export interface SubmitProofShotsRequest {
  */
 export const submitProofShots = async (
   taskId: number,
-  data: SubmitProofShotsRequest
+  data: SubmitProofShotsRequest,
 ): Promise<void> => {
   try {
     await axiosInstance.put(`/tasks/${taskId}/submit`, data);
@@ -144,4 +144,17 @@ export const submitProofShots = async (
     console.error("인증샷 저장 실패:", error);
     throw error;
   }
+};
+
+// url만 조회
+export const getFileUrl = async (fileId: number): Promise<string> => {
+  const { data } = await axiosInstance.get<FileUrlResponse>("/files", {
+    params: { fileId },
+  });
+
+  if (!data?.url) {
+    throw new Error("서버로부터 파일 URL을 받아오지 못했습니다.");
+  }
+
+  return data.url;
 };
