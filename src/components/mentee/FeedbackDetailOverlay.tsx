@@ -119,7 +119,7 @@ function transformToOverlayVM(api: TaskFeedbackDetailData): OverlayVM {
           ? "중요한 피드백이에요. 꼭 읽고 학습에 적용해보세요."
           : null,
         detail: f.content,
-      }),
+      })
     );
 
     return {
@@ -222,7 +222,7 @@ const FeedbackDetailOverlay = ({
   const activePhotoFeedbackSection = useMemo(() => {
     if (!data) return null;
     return data.photoFeedbacks.find(
-      (sec) => sec.photoNumber === activePhotoIndex + 1,
+      (sec) => sec.photoNumber === activePhotoIndex + 1
     );
   }, [data, activePhotoIndex]);
 

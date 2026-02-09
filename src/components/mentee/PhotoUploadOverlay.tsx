@@ -30,7 +30,7 @@ interface PhotoUploadOverlayProps {
   onSave: (
     finalImages: string[],
     files: File[],
-    markersData: ImageMarkerData[],
+    markersData: ImageMarkerData[]
   ) => void;
   subject: string;
   title: string;
@@ -71,7 +71,7 @@ const ContentHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  padding: 0 16px;
   background-color: white;
 `;
 
@@ -103,6 +103,10 @@ const EmptyState = styled.div`
   color: var(--color-gray-500);
   ${typography.t14r}
   margin-bottom: 60px;
+  & > div:nth-child(1) {
+    color: var(--color-black);
+    ${typography.t16m}
+  }
 `;
 
 const CarouselContainer = styled.div<{ $isDragging: boolean }>`
@@ -112,7 +116,6 @@ const CarouselContainer = styled.div<{ $isDragging: boolean }>`
   overflow-x: auto;
   scroll-snap-type: ${({ $isDragging }) =>
     $isDragging ? "none" : "x mandatory"};
-  padding-bottom: 40px;
 
   &::-webkit-scrollbar {
     display: none;
@@ -124,26 +127,26 @@ const CarouselContainer = styled.div<{ $isDragging: boolean }>`
 const ImageSlide = styled.div`
   flex: 0 0 100%;
   width: 100%;
-  height: 80%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   scroll-snap-align: center;
-  padding: 0 20px;
   box-sizing: border-box;
 `;
 
 const ImageWrapper = styled.div`
   position: relative;
-  display: inline-block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const PreviewImg = styled.img`
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 12px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   user-select: none;
@@ -254,7 +257,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     y: number;
   } | null>(null);
   const [editingMarkerIndex, setEditingMarkerIndex] = useState<number | null>(
-    null,
+    null
   );
 
   // 제한 초과 경고 표시 상태
@@ -398,7 +401,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     // 드래그 여부 확인 (5px 이상 움직였으면 클릭 무시)
     const dist = Math.sqrt(
       Math.pow(e.clientX - dragStartPos.current.x, 2) +
-        Math.pow(e.clientY - dragStartPos.current.y, 2),
+        Math.pow(e.clientY - dragStartPos.current.y, 2)
     );
     if (dist > 5) return;
 
@@ -423,11 +426,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
             ? {
                 ...data,
                 markers: data.markers.map((marker, mIdx) =>
-                  mIdx === editingMarkerIndex ? { ...marker, content } : marker,
+                  mIdx === editingMarkerIndex ? { ...marker, content } : marker
                 ),
               }
-            : data,
-        ),
+            : data
+        )
       );
     } else if (pendingPosition) {
       const newMarker: QuestionMarker = {
@@ -439,8 +442,8 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
         prev.map((data, idx) =>
           idx === currentIndex
             ? { ...data, markers: [...data.markers, newMarker] }
-            : data,
-        ),
+            : data
+        )
       );
     }
 
@@ -462,11 +465,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
           ? {
               ...data,
               markers: data.markers.filter(
-                (_, mIdx) => mIdx !== editingMarkerIndex,
+                (_, mIdx) => mIdx !== editingMarkerIndex
               ),
             }
-          : data,
-      ),
+          : data
+      )
     );
     setIsPopupOpen(false);
     setEditingMarkerIndex(null);

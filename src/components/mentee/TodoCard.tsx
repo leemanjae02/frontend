@@ -129,8 +129,7 @@ const Wrap = styled.button<{ $hasMeta: boolean }>`
 
   &:focus-visible {
     outline: none;
-    box-shadow:
-      0 0 0 3px var(--color-primary-200),
+    box-shadow: 0 0 0 3px var(--color-primary-200),
       0px 2px 10px rgba(0, 0, 0, 0.06);
   }
 `;

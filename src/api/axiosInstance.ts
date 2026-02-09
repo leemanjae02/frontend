@@ -27,7 +27,19 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response Interceptor: 401 에러 시 토큰 갱신 시도
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const subscribeTokenRefresh = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
+};
+
+const onRefreshed = (token: string) => {
+  refreshSubscribers.map((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+// Response Interceptor: 401 또는 403 에러 시 토큰 갱신 시도
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -35,9 +47,26 @@ axiosInstance.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // 401 에러이고, 재시도하지 않은 요청인 경우
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 401 또는 403 에러이고, 재시도하지 않은 요청인 경우
+    // 백엔드에서 토큰 만료 시 403을 반환하므로 403도 처리 대상에 포함
+    if (
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      !originalRequest._retry
+    ) {
+      if (isRefreshing) {
+        // 이미 갱신 중이라면 완료될 때까지 대기 후 재시도
+        return new Promise((resolve) => {
+          subscribeTokenRefresh((token: string) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            resolve(axiosInstance(originalRequest));
+          });
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       const { setAuth, logout } = useAuthStore.getState();
 
@@ -46,23 +75,27 @@ axiosInstance.interceptors.response.use(
         const response = await axios.post(
           `${BASE_URL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true, timeout: 10000 }
         );
 
         const { accessToken: newAccessToken, role } = response.data;
 
         // 새 토큰 저장
         setAuth(newAccessToken, role);
+        isRefreshing = false;
+        onRefreshed(newAccessToken);
 
         // 원래 요청 재시도
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
         return axiosInstance(originalRequest);
-      } catch {
+      } catch (refreshError) {
+        isRefreshing = false;
+        refreshSubscribers = [];
         // 리프레시 토큰도 만료된 경우 로그아웃
         logout();
-        return Promise.reject(error);
+        return Promise.reject(refreshError);
       }
     }
 
