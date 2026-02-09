@@ -14,7 +14,12 @@ export interface MentorCheckItem {
 interface Props {
   items?: MentorCheckItem[];
   className?: string;
+
+  loading?: boolean;
+  errorText?: string | null;
 }
+
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_DASHBOARD === "true";
 
 const MOCK_ITEMS: MentorCheckItem[] = [
   {
@@ -31,23 +36,48 @@ const MOCK_ITEMS: MentorCheckItem[] = [
   },
 ];
 
-const MentorCheck = ({ items, className }: Props) => {
-  const data = items ?? MOCK_ITEMS;
+const MentorCheck = ({
+  items,
+  className,
+  loading = false,
+  errorText,
+}: Props) => {
+  const data = USE_MOCK ? (items ?? MOCK_ITEMS) : (items ?? []);
+
+  if (loading) {
+    return (
+      <Wrap className={className}>
+        <StateText>불러오는 중...</StateText>
+      </Wrap>
+    );
+  }
+
+  if (errorText) {
+    return (
+      <Wrap className={className}>
+        <StateText>{errorText}</StateText>
+      </Wrap>
+    );
+  }
 
   return (
     <Wrap className={className}>
-      {data.map((it) => (
-        <Block key={it.key}>
-          <Top>
-            <Title>{it.title}</Title>
-            <RedCountBadge count={it.count} />
-          </Top>
+      {data.length === 0 ? (
+        <StateText>확인할 항목이 없습니다.</StateText>
+      ) : (
+        data.map((it) => (
+          <Block key={it.key}>
+            <Top>
+              <Title>{it.title}</Title>
+              <RedCountBadge count={it.count} />
+            </Top>
 
-          <Names>
-            {it.menteeNames.length > 0 ? it.menteeNames.join(", ") : "-"}
-          </Names>
-        </Block>
-      ))}
+            <Names>
+              {it.menteeNames.length > 0 ? it.menteeNames.join(", ") : ""}
+            </Names>
+          </Block>
+        ))
+      )}
     </Wrap>
   );
 };
@@ -87,6 +117,13 @@ const Title = styled.div`
 const Names = styled.div`
   ${typography.t14r}
   color: var(--color-gray-600);
+`;
+
+const StateText = styled.div`
+  ${typography.t14r}
+  color: var(--color-gray-500);
+  padding: 12px 0;
+  text-align: left;
 `;
 
 export default MentorCheck;

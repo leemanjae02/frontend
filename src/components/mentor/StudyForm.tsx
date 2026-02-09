@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 import CalendarIcon from "../../assets/images/icon/month.svg?react";
@@ -16,47 +16,118 @@ import ButtonMinus from "../ButtonMinus";
 import DatePicker from "../DatePicker";
 import { typography } from "../../styles/typography";
 import InfoTooltip from "./InfoTooltip";
+import { uploadFile } from "../../api/file";
 
 type ResourceMode = "EMPTY" | "CHOICE" | "FILE" | "LINK";
-
 type Mode = "todo" | "resource";
+
+export interface StudyFormResourcePayload {
+  subject: SubjectKey;
+  resourceName: string;
+  fileId?: number;
+  columnLink?: string;
+}
+
+export interface StudyFormTodoPayload {
+  subject: SubjectKey;
+  dates: string[];
+  taskNames: string[];
+  goalMinutes: number;
+  worksheets: Array<{ fileId: number }>;
+  columnLinks: Array<{ link: string }>;
+}
+
+type StudyFormPayload = StudyFormTodoPayload | StudyFormResourcePayload;
 
 interface Props {
   mode: Mode;
-
   submitText: string;
-  onSubmit: (payload: any) => void;
+  onSubmit: (payload: StudyFormPayload) => void;
 
   showDate?: boolean;
   showGoalMinutes?: boolean;
   showTaskList?: boolean;
 
-  resourceStartMode?: "EMPTY" | "CHOICE";
+  initialSubject?: SubjectKey;
+  initialResourceTitle?: string;
+  initialResourceMode?: ResourceMode;
+  initialFileId?: number | null;
+  initialFileName?: string;
+  initialLinkUrl?: string;
 }
 
 const StudyForm = ({
   mode,
   submitText,
   onSubmit,
-
   showDate = mode === "todo",
   showGoalMinutes = mode === "todo",
   showTaskList = mode === "todo",
-  resourceStartMode = "EMPTY",
+
+  initialSubject,
+  initialResourceTitle,
+  initialResourceMode,
+  initialFileId,
+  initialFileName,
+  initialLinkUrl,
 }: Props) => {
   const [subject, setSubject] = useState<SubjectKey>("KOREAN");
+  // 날짜
   const [usePeriod, setUsePeriod] = useState(false);
   const [dates, setDates] = useState<string[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  // 할일
   const [taskNameInput, setTaskNameInput] = useState("");
   const [taskNames, setTaskNames] = useState<string[]>([]);
-  const [resourceTitle, setResourceTitle] = useState("");
   const [goalMinutes, setGoalMinutes] = useState("");
-  const [resourceMode, setResourceMode] =
-    useState<ResourceMode>(resourceStartMode);
+  // 자료(worksheet / link)
+  const [resourceMode, setResourceMode] = useState<ResourceMode>("CHOICE");
   const [fileName, setFileName] = useState("");
+  const [worksheetFileId, setWorksheetFileId] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [resourceTitle, setResourceTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
+
+  const [didInit, setDidInit] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "resource") return;
+    if (didInit) return;
+
+    const hasAnyInitial =
+      initialSubject ||
+      initialResourceTitle ||
+      initialResourceMode ||
+      initialFileId != null ||
+      initialFileName ||
+      initialLinkUrl;
+
+    if (!hasAnyInitial) return;
+
+    if (initialSubject) setSubject(initialSubject);
+    if (typeof initialResourceTitle === "string")
+      setResourceTitle(initialResourceTitle);
+
+    if (initialResourceMode) setResourceMode(initialResourceMode);
+
+    if (typeof initialFileName === "string") setFileName(initialFileName);
+    if (initialFileId !== undefined) setWorksheetFileId(initialFileId ?? null);
+
+    if (typeof initialLinkUrl === "string") setLinkUrl(initialLinkUrl);
+
+    setDidInit(true);
+  }, [
+    mode,
+    didInit,
+    initialSubject,
+    initialResourceTitle,
+    initialResourceMode,
+    initialFileId,
+    initialFileName,
+    initialLinkUrl,
+  ]);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isResourceRequired = mode === "resource";
@@ -71,11 +142,49 @@ const StudyForm = ({
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const applyFile = (file?: File | null) => {
+  const expandDates = (start: string, end: string) => {
+    const toUTCDate = (s: string) => new Date(`${s}T00:00:00Z`);
+    const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+
+    let s = toUTCDate(start);
+    let e = toUTCDate(end);
+
+    if (Number.isNaN(+s) || Number.isNaN(+e)) return [];
+    if (s > e) {
+      // start/end 반대로 들어온 경우 swap
+      const tmp = s;
+      s = e;
+      e = tmp;
+    }
+
+    const out: string[] = [];
+    for (
+      let cur = new Date(s);
+      cur <= e;
+      cur.setUTCDate(cur.getUTCDate() + 1)
+    ) {
+      out.push(toYMD(cur));
+    }
+    return out;
+  };
+
+  const applyFile = async (file?: File | null) => {
     if (!file) return;
-    setFileName(file.name);
-    setLinkUrl("");
-    setResourceMode("FILE");
+
+    setUploading(true);
+    try {
+      const res = await uploadFile(file, "/worksheets"); // 폴더는 정책대로
+      setWorksheetFileId(res.fileId);
+
+      setFileName(file.name);
+      setLinkUrl("");
+      setResourceMode("FILE");
+    } catch (e) {
+      console.error(e);
+      alert("파일 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const onDropUpload = (e: React.DragEvent) => {
@@ -90,6 +199,7 @@ const StudyForm = ({
 
   const removeResource = () => {
     setFileName("");
+    setWorksheetFileId(null);
     setLinkUrl("");
     setResourceMode("CHOICE");
   };
@@ -113,78 +223,79 @@ const StudyForm = ({
 
   const todayPlaceholder = useMemo(() => getTodayYYYYMMDD(), []);
 
+  const resolvedDates = useMemo(() => {
+    if (!showDate) return [];
+    if (!usePeriod) return dates;
+    if (!startDate.trim() || !endDate.trim()) return [];
+    return expandDates(startDate.trim(), endDate.trim());
+  }, [showDate, usePeriod, dates, startDate, endDate]);
+
   const isValid = useMemo(() => {
     const hasSubject = !!subject;
-    const hasDate = !showDate
-      ? true
-      : !usePeriod
-        ? dates.length > 0
-        : String(startDate).trim().length > 0 &&
-          String(endDate).trim().length > 0;
+
+    const hasDate = !showDate ? true : resolvedDates.length > 0;
+
     const hasName = showTaskList
       ? taskNames.length > 0
       : resourceTitle.trim().length > 0;
+
     const minutes = Number(goalMinutes);
     const hasMinutes = !showGoalMinutes
       ? true
       : goalMinutes.trim().length > 0 && !Number.isNaN(minutes) && minutes > 0;
-    const hasResource =
-      mode !== "resource"
-        ? true
-        : resourceMode === "FILE"
-          ? fileName.trim().length > 0
-          : resourceMode === "LINK"
-            ? linkUrl.trim().length > 0
-            : false;
 
-    return hasSubject && hasDate && hasName && hasMinutes && hasResource;
+    const hasFileOk =
+      resourceMode !== "FILE"
+        ? true
+        : !uploading && worksheetFileId != null && fileName.trim().length > 0;
+
+    const hasLinkOk =
+      resourceMode !== "LINK" ? true : linkUrl.trim().length > 0;
+
+    return (
+      hasSubject && hasDate && hasName && hasMinutes && hasFileOk && hasLinkOk
+    );
   }, [
     subject,
     showDate,
-    usePeriod,
-    dates,
-    startDate,
-    endDate,
+    resolvedDates,
     showTaskList,
     taskNames,
-    resourceTitle,
     showGoalMinutes,
     goalMinutes,
-    mode,
     resourceMode,
+    uploading,
+    worksheetFileId,
     fileName,
     linkUrl,
   ]);
 
   const handleSubmit = () => {
-    const payload: any = {
-      subject,
+    if (mode === "resource") {
+      const payload: StudyFormResourcePayload = {
+        subject,
+        resourceName: resourceTitle.trim(),
+        ...(worksheetFileId != null ? { fileId: worksheetFileId } : {}),
+        ...(resourceMode === "LINK" && linkUrl.trim()
+          ? { columnLink: linkUrl.trim() }
+          : {}),
+      };
 
-      resource:
-        resourceMode === "FILE"
-          ? { type: "FILE", fileName }
-          : resourceMode === "LINK"
-            ? { type: "LINK", url: linkUrl }
-            : { type: "NONE" },
-    };
-
-    if (showDate) {
-      payload.usePeriod = usePeriod;
-
-      if (usePeriod) {
-        payload.startDate = startDate;
-        payload.endDate = endDate;
-      } else {
-        payload.dates = dates;
-
-        if (dates.length === 1) payload.date = dates[0];
-      }
+      onSubmit(payload);
+      return;
     }
 
-    if (showTaskList) payload.taskNames = taskNames;
-    else payload.resourceTitle = resourceTitle.trim();
-
-    if (showGoalMinutes) payload.goalMinutes = Number(goalMinutes);
+    const payload: StudyFormTodoPayload = {
+      subject,
+      dates: resolvedDates,
+      taskNames,
+      goalMinutes: Number(goalMinutes),
+      worksheets: worksheetFileId != null ? [{ fileId: worksheetFileId }] : [],
+      columnLinks:
+        resourceMode === "LINK" && linkUrl.trim()
+          ? [{ link: linkUrl.trim() }]
+          : [],
+    };
 
     onSubmit(payload);
   };
@@ -408,36 +519,16 @@ const StudyForm = ({
               onChange={(e) => applyFile(e.target.files?.[0])}
             />
 
-            {resourceMode === "EMPTY" && (
-              <SquareChip
-                onClick={openFilePicker}
-                onDragOver={onDragOver}
-                onDrop={onDropUpload}
-              >
-                <Inner>
-                  <Icon>
-                    <UploadIcon />
-                  </Icon>
-                  <Inner1>
-                    <Title>파일을 드래그하거나 클릭하여 업로드</Title>
-                    <Desc>PDF 파일만 지원합니다.</Desc>
-                  </Inner1>
-                </Inner>
-              </SquareChip>
-            )}
-
-            {resourceMode === "FILE" && (
-              <ResourceRow>
-                <ResourceInput>
-                  <Input value={fileName} onChange={() => {}} readOnly />
-                </ResourceInput>
-                <ButtonMinus onClick={removeResource} />
-              </ResourceRow>
-            )}
-
             {resourceMode === "CHOICE" && (
               <ResourceGrid>
-                <SquareChip onClick={openFilePicker}>
+                <SquareChip
+                  onClick={() => {
+                    setFileName("");
+                    setWorksheetFileId(null);
+                    setLinkUrl("");
+                    setResourceMode("EMPTY");
+                  }}
+                >
                   <Inner>
                     <Icon>
                       <UploadIcon />
@@ -452,6 +543,7 @@ const StudyForm = ({
                 <SquareChip
                   onClick={() => {
                     setFileName("");
+                    setWorksheetFileId(null);
                     setLinkUrl("");
                     setResourceMode("LINK");
                   }}
@@ -467,6 +559,37 @@ const StudyForm = ({
                   </Inner>
                 </SquareChip>
               </ResourceGrid>
+            )}
+
+            {resourceMode === "EMPTY" && (
+              <SquareChip
+                onClick={openFilePicker}
+                onDragOver={onDragOver}
+                onDrop={onDropUpload}
+              >
+                <Inner>
+                  <Icon>
+                    <UploadIcon />
+                  </Icon>
+                  <Inner1>
+                    <Title>
+                      {uploading
+                        ? "업로드 중..."
+                        : "파일을 드래그하거나 클릭하여 업로드"}
+                    </Title>
+                    <Desc>PDF 파일만 지원합니다.</Desc>
+                  </Inner1>
+                </Inner>
+              </SquareChip>
+            )}
+
+            {resourceMode === "FILE" && (
+              <ResourceRow>
+                <ResourceInput>
+                  <Input value={fileName} onChange={() => {}} readOnly />
+                </ResourceInput>
+                <ButtonMinus onClick={removeResource} />
+              </ResourceRow>
             )}
 
             {resourceMode === "LINK" && (

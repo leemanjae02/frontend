@@ -1,35 +1,149 @@
 import styled from "styled-components";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { typography } from "../../styles/typography";
 
-import MenteeListTable from "../../components/mentor/MenteeListTable";
-import { mockMentorMenteeRows } from "../../mock/menteeDashboard.mock";
+import MenteeListTable, {
+  type MentorMenteeRow,
+} from "../../components/mentor/MenteeListTable";
 import type { LabelStatus } from "../../components/SubmitLabel";
-import MentorCheck from "../../components/mentor/MentorCheck";
+import MentorCheck, {
+  type MentorCheckItem,
+} from "../../components/mentor/MentorCheck";
+import {
+  getFeedbackRequiredTasks,
+  getMentorDashboardMentees,
+  getUnfinishedTasks,
+  type FeedbackRequiredTasksResponse,
+  type GetMentorDashboardMenteesResponse,
+  type UnfinishedTasksResponse,
+} from "../../api/mentorDashboard";
+
+export const SUBJECT_LABEL_MAP: Record<string, string> = {
+  KOREAN: "국어",
+  MATH: "수학",
+  ENGLISH: "영어",
+};
+
+function toMenteeRows(
+  api: GetMentorDashboardMenteesResponse,
+): MentorMenteeRow[] {
+  return (api.mentees ?? []).map((m) => {
+    const subjectsLabel = (m.subjects ?? [])
+      .map((s) => SUBJECT_LABEL_MAP[String(s)] ?? String(s))
+      .join(" / ");
+
+    const status: LabelStatus = m.submitted ? "SUBMITTED" : "NOT_SUBMITTED";
+
+    const recentStudyLabel = `${m.recentTaskDate}/${m.recentTaskName}`;
+
+    return {
+      menteeId: m.menteeId,
+      name: m.menteeName,
+      gradeLabel: m.grade,
+      subjectsLabel,
+      recentStudyLabel,
+      status,
+    };
+  });
+}
 
 const MentorDashboardPage = () => {
   const navigate = useNavigate();
+  const today = useMemo(() => new Date(), []);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [menteesApi, setMenteesApi] =
+    useState<GetMentorDashboardMenteesResponse | null>(null);
+  const [feedbackRequired, setFeedbackRequired] =
+    useState<FeedbackRequiredTasksResponse | null>(null);
+  const [unfinished, setUnfinished] = useState<UnfinishedTasksResponse | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [menteesRes, feedbackRes, unfinishedRes] = await Promise.all([
+          getMentorDashboardMentees(today),
+          getFeedbackRequiredTasks(today),
+          getUnfinishedTasks(today),
+        ]);
+
+        if (ignore) return;
+
+        setMenteesApi(menteesRes);
+        setFeedbackRequired(feedbackRes);
+        setUnfinished(unfinishedRes);
+      } catch (e) {
+        console.error(e);
+        if (ignore) return;
+        setError("대시보드 정보를 불러오지 못했습니다.");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [today]);
+
+  const rows = useMemo(() => {
+    if (!menteesApi) return [];
+    return toMenteeRows(menteesApi);
+  }, [menteesApi]);
 
   const summary = useMemo(() => {
-    const total = mockMentorMenteeRows.length;
+    if (menteesApi) {
+      return {
+        total: menteesApi.totalMenteeCount,
+        submitted: menteesApi.submittedMenteeCount,
+        notSubmitted: menteesApi.notSubmittedMenteeCount,
+      };
+    }
 
-    const submitted = mockMentorMenteeRows.filter(
+    const total = rows.length;
+    const submitted = rows.filter(
       (r) => r.status === ("SUBMITTED" as LabelStatus),
     ).length;
-
-    const notSubmitted = mockMentorMenteeRows.filter(
+    const notSubmitted = rows.filter(
       (r) => r.status === ("NOT_SUBMITTED" as LabelStatus),
     ).length;
-
     return { total, submitted, notSubmitted };
-  }, []);
+  }, [menteesApi, rows]);
+
+  const checkItems: MentorCheckItem[] = useMemo(() => {
+    if (!feedbackRequired && !unfinished) return [];
+
+    return [
+      {
+        key: "NO_FEEDBACK",
+        title: "피드백 미작성",
+        count: feedbackRequired?.taskCount ?? 0,
+        menteeNames: feedbackRequired?.menteeNames ?? [],
+      },
+      {
+        key: "NOT_DONE",
+        title: "학습 미이행",
+        count: unfinished?.taskCount ?? 0,
+        menteeNames: unfinished?.menteeNames ?? [],
+      },
+    ];
+  }, [feedbackRequired, unfinished]);
 
   return (
     <PageContainer>
       <Section>
         <SectionTitle>오늘 확인해야 할 항목</SectionTitle>
-        <MentorCheck />
+        <MentorCheck loading={loading} errorText={error} items={checkItems} />
       </Section>
 
       <Section style={{ marginTop: 40 }}>
@@ -59,7 +173,9 @@ const MentorDashboardPage = () => {
         </ListTop>
 
         <MenteeListTable
-          rows={mockMentorMenteeRows}
+          rows={rows}
+          loading={loading}
+          emptyText={error ? error : "멘티가 없습니다."}
           onRowClick={(row) => navigate(`/mentor/mentees/${row.menteeId}`)}
         />
       </Section>

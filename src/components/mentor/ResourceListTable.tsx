@@ -15,6 +15,7 @@ interface Props {
 
   loading?: boolean;
   emptyText?: string;
+  onRowClick?: (row: MentorResourceRow) => void;
 
   onEdit?: (row: MentorResourceRow) => void;
   onDelete?: (row: MentorResourceRow) => void;
@@ -25,6 +26,7 @@ const ResourceListTable = ({
   className,
   loading = false,
   emptyText = "자료가 없습니다.",
+  onRowClick,
   onEdit,
   onDelete,
 }: Props) => {
@@ -61,7 +63,14 @@ const ResourceListTable = ({
             </TrBody>
           ) : (
             rows.map((row) => (
-              <TrBody key={row.resourceId}>
+              <TrBody
+                key={row.resourceId}
+                $clickable={!!onRowClick}
+                onClick={() => {
+                  console.log("[ResourceListTable] row clicked:", row);
+                  onRowClick?.(row);
+                }}
+              >
                 <Td $align="left">{row.title}</Td>
                 <Td $align="center">{row.createdAtLabel}</Td>
                 <Td $align="center">{row.subjectLabel}</Td>
@@ -69,7 +78,10 @@ const ResourceListTable = ({
                   <Actions>
                     <ActionBtnWrap>
                       <Button
-                        onClick={() => onEdit?.(row)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit?.(row);
+                        }}
                         disabled={!onEdit}
                         title="수정"
                         style={{
@@ -93,7 +105,10 @@ const ResourceListTable = ({
                         fontWeight: 600,
                         lineHeight: "21px",
                       }}
-                      onClick={() => onDelete?.(row)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete?.(row);
+                      }}
                     />
                   </Actions>
                 </Td>
@@ -134,8 +149,18 @@ const Th = styled.th<{ $w?: number; $align?: "left" | "right" | "center" }>`
   text-overflow: ellipsis;
 `;
 
-const TrBody = styled.tr`
+const TrBody = styled.tr<{ $clickable?: boolean }>`
   border-bottom: 1px solid var(--color-gray-100);
+
+  ${({ $clickable }) =>
+    $clickable &&
+    `
+      cursor: pointer;
+
+      &:hover {
+        background: var(--color-gray-50);
+      }
+    `}
 `;
 
 const Td = styled.td<{ $align?: "left" | "right" | "center" }>`

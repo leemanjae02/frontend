@@ -1,24 +1,60 @@
 import styled from "styled-components";
 import type { MentorResourceRow } from "../ResourceListTable";
-import { mockMentorResources } from "../../../mock/menteeDashboard.mock";
 import Button from "../../Button";
 import ResourceListTable from "../ResourceListTable";
 import { typography } from "../../../styles/typography";
 import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { deleteResource, getResources } from "../../../api/resource";
+import { SUBJECT_LABEL_MAP } from "../../../pages/mentor/MentorDashboardPage";
 
 interface Props {
   className?: string;
-  // 추후 API 연결 대비
   rows?: MentorResourceRow[];
   onEdit?: (row: MentorResourceRow) => void;
   onDelete?: (row: MentorResourceRow) => void;
 }
 
-const ResourceSection = ({ className, rows, onEdit, onDelete }: Props) => {
+const ResourceSection = ({ className, rows, onDelete }: Props) => {
   const navigate = useNavigate();
   const { menteeId } = useParams();
 
-  const data = rows ?? mockMentorResources;
+  const [apiRows, setApiRows] = useState<MentorResourceRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const data = useMemo(() => (rows ? rows : apiRows), [rows, apiRows]);
+
+  const refetch = async () => {
+    if (rows) return;
+    if (!menteeId) return;
+
+    try {
+      setLoading(true);
+      const res = await getResources(Number(menteeId));
+
+      const mapped: MentorResourceRow[] = res.map((r) => ({
+        resourceId: r.resourceId,
+        title: r.resourceName,
+        createdAtLabel: r.registeredDate,
+        subjectLabel: SUBJECT_LABEL_MAP[r.subject] ?? r.subject,
+      }));
+
+      setApiRows(mapped);
+    } catch (e) {
+      console.error(e);
+      setApiRows([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refetch();
+  }, [menteeId, rows]);
+
+  const goDetail = (row: MentorResourceRow) => {
+    navigate(`/mentor/mentees/${menteeId}/resources/${row.resourceId}`);
+  };
 
   return (
     <Wrap className={className}>
@@ -38,15 +74,27 @@ const ResourceSection = ({ className, rows, onEdit, onDelete }: Props) => {
 
       <ResourceListTable
         rows={data}
-        onEdit={(row) => {
-          onEdit?.(row);
-          alert(`수정: ${row.title}`);
-        }}
-        onDelete={(row) => {
+        loading={loading}
+        onRowClick={goDetail}
+        onDelete={async (row) => {
           onDelete?.(row);
-          if (confirm(`"${row.title}" 자료를 삭제할까요?`)) {
-            alert("삭제 API 연결 예정");
+
+          const ok = confirm(`"${row.title}" 자료를 삭제할까요?`);
+          if (!ok) return;
+
+          try {
+            await deleteResource(Number(row.resourceId));
+            alert("삭제되었습니다.");
+            await refetch();
+          } catch (e) {
+            console.error(e);
+            alert("삭제에 실패했습니다.");
           }
+        }}
+        onEdit={(row) => {
+          navigate(
+            `/mentor/mentees/${menteeId}/resources/${row.resourceId}/edit`,
+          );
         }}
       />
     </Wrap>

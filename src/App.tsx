@@ -9,6 +9,7 @@ import MenteeDetailPage from "./pages/mentor/MenteeDetailPage";
 import TodoCreateSection from "./components/mentor/sections/TodoCreateSection";
 import ResourceSection from "./components/mentor/sections/ResourceSection";
 import ResourceCreateForm from "./components/mentor/ResourceCreateForm";
+import ResourceDetailView from "./components/mentor/ResourceDetailView";
 
 function App() {
   return (
@@ -41,6 +42,15 @@ function App() {
           <Route path="todo" element={<TodoCreateSection />} />
           <Route path="resources" element={<ResourceSection />} />
           <Route path="resources/new" element={<ResourceCreateForm />} />
+          <Route
+            path="resources/:resourceId/edit"
+            element={<ResourceCreateForm />}
+          />
+          <Route
+            path="resources/:resourceId"
+            element={<ResourceDetailView />}
+          />
+
           {/* 나머지는 추후 구현 */}
           {/* <Route path="plan" element={<div style={{ padding: 24 }}>주간 학습 계획</div>} /> */}
           {/* <Route path="reports" element={<div style={{ padding: 24 }}>주간 학습 리포트 발송</div>} /> */}

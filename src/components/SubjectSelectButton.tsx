@@ -46,7 +46,7 @@ const SubjectSelectButton = ({
   };
 
   return (
-    <Wrap className={className} aria-disabled={disabled}>
+    <Wrap className={className}>
       {items.map((it) => {
         const active = it.key === selected;
         return (
@@ -112,6 +112,8 @@ const ItemButton = styled.button<{
     cursor: not-allowed;
     transform: none;
     opacity: 0.7;
+    background: var(--color-gray-100);
+    color: var(--color-gray-300);
   }
 `;
 

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, useLocation, useParams } from "react-router-dom";
 import { typography } from "../../styles/typography";
 
 import PlanIcon from "../../assets/images/icon/pen.svg?react";
@@ -48,6 +48,16 @@ const SideMenuItem = ({ to, icon, label, end = false }: ItemProps) => {
 
 const MenteeSideMenuBar = ({ className }: Props) => {
   const { menteeId } = useParams();
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log("[SideBar mounted]");
+    console.log("[SideBar] pathname:", location.pathname);
+  }, []);
+
+  useEffect(() => {
+    console.log("[SideBar pathname changed]", location.pathname);
+  }, [location.pathname]);
 
   return (
     <Wrap className={className}>

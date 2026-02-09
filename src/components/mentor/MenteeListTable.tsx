@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { typography } from "../../styles/typography";
 import SubmitLabel, { type LabelStatus } from "../SubmitLabel";
+import { getHighSchoolGradeLabel } from "../../utils/grade";
 
 export interface MentorMenteeRow {
   menteeId: number | string;
@@ -31,11 +32,11 @@ const MenteeListTable = ({
       <Table>
         <thead>
           <TrHead>
-            <Th $w={120}>멘티명</Th>
-            <Th $w={170}>학년</Th>
-            <Th $w={220}>과목</Th>
-            <Th>최근 학습 기록</Th>
-            <Th $w={130}>상태</Th>
+            <Th $w={20}>멘티명</Th>
+            <Th $w={10}>학년</Th>
+            <Th $w={40}>과목</Th>
+            <Th $w={100}>최근 학습 기록</Th>
+            <Th $w={20}>상태</Th>
           </TrHead>
         </thead>
 
@@ -60,7 +61,7 @@ const MenteeListTable = ({
                 onClick={() => onRowClick?.(row)}
               >
                 <Td>{row.name}</Td>
-                <Td>{row.gradeLabel}</Td>
+                <Td>{getHighSchoolGradeLabel(row.gradeLabel)}</Td>
                 <Td>{row.subjectsLabel}</Td>
                 <Td $align="left">{row.recentStudyLabel}</Td>
                 <Td>

@@ -1,35 +1,87 @@
 import styled from "styled-components";
 import { typography } from "../../styles/typography";
+import { useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { getMentorMenteeInfo } from "../../api/mentorDashboard";
+import type { SubjectKey } from "../SubjectAddButton";
+import { SUBJECT_LABEL_MAP } from "../../pages/mentor/MentorDashboardPage";
+import { getHighSchoolGradeLabel } from "../../utils/grade";
 
-export interface MenteeInfoData {
-  menteeId?: number | string;
+interface MenteeInfoData {
   name: string;
   gradeLabel: string;
-  subjects: string[]; // 추후 타입 보고 수정
+  subjectsLabel: string;
 }
 
 interface Props {
-  data: MenteeInfoData;
   className?: string;
 }
 
-export default function MenteeInfo({ data, className }: Props) {
-  const subjectText =
-    data.subjects && data.subjects.length > 0 ? data.subjects.join(" / ") : "-";
+export default function MenteeInfo({ className }: Props) {
+  const { menteeId } = useParams<{ menteeId: string }>();
+
+  const [loading, setLoading] = useState(false);
+  const [vm, setVm] = useState<MenteeInfoData>({
+    name: "-",
+    gradeLabel: "-",
+    subjectsLabel: "-",
+  });
+
+  useEffect(() => {
+    if (!menteeId) return;
+
+    const run = async () => {
+      try {
+        setLoading(true);
+
+        const res = await getMentorMenteeInfo(Number(menteeId));
+
+        const subjectsText =
+          res.subjects && res.subjects.length > 0
+            ? res.subjects
+                .map((s: SubjectKey) => SUBJECT_LABEL_MAP[s] ?? String(s))
+                .join(" / ")
+            : "-";
+
+        setVm({
+          name: res.menteeName ?? "-",
+          gradeLabel: res.grade ?? "-",
+          subjectsLabel: subjectsText,
+        });
+      } catch (e) {
+        console.error(e);
+        setVm({
+          name: "-",
+          gradeLabel: "-",
+          subjectsLabel: "-",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [menteeId]);
+
+  const subtitle = useMemo(() => {
+    return loading ? "불러오는 중..." : vm.subjectsLabel;
+  }, [loading, vm.subjectsLabel]);
 
   return (
     <Card className={className}>
-      <Name>{data.name}</Name>
+      <Name>{loading ? "불러오는 중..." : vm.name}</Name>
       <Divider />
 
       <Field>
         <Label>학년</Label>
-        <Value>{data.gradeLabel}</Value>
+        <Value>
+          {loading ? "불러오는 중..." : getHighSchoolGradeLabel(vm.gradeLabel)}
+        </Value>
       </Field>
 
       <Field>
         <Label>관리 과목</Label>
-        <Value>{subjectText}</Value>
+        <Value>{subtitle}</Value>
       </Field>
     </Card>
   );

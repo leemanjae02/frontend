@@ -337,3 +337,37 @@ export const fetchTaskFeedbackDetail = async (
     throw error;
   }
 };
+
+// =============================================================================
+// [SECTION X] 할 일 추가 (멘토용)
+// Method: POST
+// Endpoint: /tasks/mentor
+// =============================================================================
+
+export interface CreateMentorTaskRequest {
+  menteeId: number;
+  subject: "KOREAN" | "ENGLISH" | "MATH" | "RESOURCE" | string;
+
+  dates: string[];
+
+  taskNames: string[];
+  goalMinutes: number;
+
+  worksheets?: Array<{ fileId: number }>;
+  columnLinks?: Array<{ link: string }>;
+}
+
+export const createTasksByMentor = async (
+  payload: CreateMentorTaskRequest,
+): Promise<DailyTask[]> => {
+  try {
+    const { data } = await axiosInstance.post<DailyTask[]>(
+      "/tasks/mentor",
+      payload,
+    );
+    return data;
+  } catch (error) {
+    console.error("멘토 할 일 추가 실패:", error);
+    throw error;
+  }
+};

@@ -1,6 +1,12 @@
-import type { MenteeInfoData } from "../components/mentor/MenteeInfo";
 import type { MentorMenteeRow } from "../components/mentor/MenteeListTable";
 import type { MentorResourceRow } from "../components/mentor/ResourceListTable";
+
+interface MenteeInfoData {
+  menteeId?: number | string;
+  name: string;
+  gradeLabel: string;
+  subjects: string[];
+}
 
 export const mockMentorMenteeRows: MentorMenteeRow[] = [
   {
@@ -107,3 +113,61 @@ export const mockMentorResources: MentorResourceRow[] = [
     subjectLabel: "영어",
   },
 ];
+
+export type MentorResourceDetail = {
+  resourceId: number | string;
+  subjectLabel: string; // "국어" 등
+  title: string; // 자료명
+  resourceText: string; // 링크 or 파일명
+  resourceHref?: string; // 링크면 넣기
+};
+
+export const mockMentorResourceDetails: MentorResourceDetail[] = [
+  {
+    resourceId: 1,
+    subjectLabel: "수학",
+    title: "오답노트 양식",
+    resourceText: "오답노트_양식.pdf",
+  },
+  {
+    resourceId: 2,
+    subjectLabel: "국어",
+    title: "학습지 풀이과정 양식",
+    resourceText: "https://youtu.be/m9EX8hoPwaY?si=1p6VMMnyQHytzp0u",
+    resourceHref: "https://youtu.be/m9EX8hoPwaY?si=1p6VMMnyQHytzp0u",
+  },
+  {
+    resourceId: 3,
+    subjectLabel: "영어",
+    title: "영단어 시험지",
+    resourceText: "영단어_시험지_01.pdf",
+  },
+  {
+    resourceId: 4,
+    subjectLabel: "영어",
+    title: "영단어 시험지",
+    resourceText: "영단어_시험지_02.pdf",
+  },
+  {
+    resourceId: 5,
+    subjectLabel: "영어",
+    title: "영단어 시험지",
+    resourceText: "https://example.com/vocab-test",
+    resourceHref: "https://example.com/vocab-test",
+  },
+  {
+    resourceId: 6,
+    subjectLabel: "영어",
+    title: "영단어 시험지",
+    resourceText: "https://example.com/vocab-test-2",
+    resourceHref: "https://example.com/vocab-test-2",
+  },
+];
+
+export function getMockMentorResourceDetail(resourceId: number | string) {
+  return (
+    mockMentorResourceDetails.find(
+      (r) => String(r.resourceId) === String(resourceId),
+    ) ?? null
+  );
+}

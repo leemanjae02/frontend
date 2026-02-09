@@ -1,21 +1,20 @@
 import styled from "styled-components";
-import { Navigate, Outlet, useParams } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 
 import MenteeInfo from "../../components/mentor/MenteeInfo";
 import MenteeSideMenuBar from "../../components/mentor/SideBar";
-import {
-  getMockMenteeById,
-  toMenteeInfoData,
-} from "../../mock/menteeDashboard.mock";
+import { useEffect } from "react";
 
 const MenteeDetailPage = () => {
   const { menteeId } = useParams<{ menteeId: string }>();
 
-  const row = menteeId ? getMockMenteeById(menteeId) : null;
+  if (!menteeId) return <Navigate to="/mentor/dashboard" replace />;
 
-  if (!row) return <Navigate to="/mentor/dashboard" replace />;
+  const location = useLocation();
 
-  const menteeInfo = toMenteeInfoData(row);
+  useEffect(() => {
+    console.log("[LOCATION]", location.pathname);
+  }, [location.pathname]);
 
   return (
     <Wrap>
@@ -25,7 +24,7 @@ const MenteeDetailPage = () => {
 
       <Grid>
         <LeftPanel>
-          <MenteeInfo data={menteeInfo} />
+          <MenteeInfo />
           <MenteeSideMenuBar />
         </LeftPanel>
 
