@@ -1,6 +1,12 @@
-import type { MenteeInfoData } from "../components/mentor/MenteeInfo";
 import type { MentorMenteeRow } from "../components/mentor/MenteeListTable";
 import type { MentorResourceRow } from "../components/mentor/ResourceListTable";
+
+interface MenteeInfoData {
+  menteeId?: number | string;
+  name: string;
+  gradeLabel: string;
+  subjects: string[];
+}
 
 export const mockMentorMenteeRows: MentorMenteeRow[] = [
   {
