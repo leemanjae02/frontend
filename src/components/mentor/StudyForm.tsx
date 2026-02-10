@@ -245,6 +245,13 @@ const StudyForm = ({
     setTaskNames((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const mergedTaskNames = useMemo(() => {
+    const v = taskNameInput.trim();
+    if (!v) return taskNames;
+    if (taskNames.includes(v)) return taskNames; // 중복 방지
+    return [...taskNames, v];
+  }, [taskNames, taskNameInput]);
+
   const todayPlaceholder = useMemo(() => getTodayYYYYMMDD(), []);
 
   const resolvedDates = useMemo(() => {
@@ -260,7 +267,7 @@ const StudyForm = ({
     const hasDate = !showDate ? true : resolvedDates.length > 0;
 
     const hasName = showTaskList
-      ? taskNames.length > 0
+      ? mergedTaskNames.length > 0
       : resourceTitle.trim().length > 0;
 
     const minutes = Number(goalMinutes);
@@ -284,7 +291,7 @@ const StudyForm = ({
     showDate,
     resolvedDates,
     showTaskList,
-    taskNames,
+    mergedTaskNames,
     showGoalMinutes,
     goalMinutes,
     resourceMode,
@@ -312,7 +319,7 @@ const StudyForm = ({
     const payload: StudyFormTodoPayload = {
       subject,
       dates: resolvedDates,
-      taskNames,
+      taskNames: mergedTaskNames,
       goalMinutes: Number(goalMinutes),
       worksheets: worksheetFileId != null ? [{ fileId: worksheetFileId }] : [],
       columnLinks:

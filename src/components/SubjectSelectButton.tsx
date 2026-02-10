@@ -14,7 +14,6 @@ const DEFAULT_SUBJECTS: SubjectItem[] = [
   { key: "KOREAN", label: "국어", activeBg: "var(--color-orange-500)" },
   { key: "ENGLISH", label: "영어", activeBg: "var(--color-pink-500)" },
   { key: "MATH", label: "수학", activeBg: "var(--color-blue-500)" },
-  { key: "RESOURCE", label: "자료", activeBg: "var(--color-gray-500)" },
 ];
 
 interface Props {
