@@ -36,7 +36,7 @@ const MenteeListTable = ({
             <Th $w={10}>학년</Th>
             <Th $w={40}>과목</Th>
             <Th $w={100}>최근 학습 기록</Th>
-            <Th $w={20}>상태</Th>
+            <Th $w={20}>오늘 제출상태</Th>
           </TrHead>
         </thead>
 

@@ -2,17 +2,19 @@ import styled from "styled-components";
 import Profile from "./Profile";
 import { typography } from "../../styles/typography";
 import LOGO from "../../assets/images/logo_pc.svg?react";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   mentorName: string;
-  //   onClickProfile?: () => void;
 }
 
 const Header = ({ mentorName }: Props) => {
+  const navigate = useNavigate();
+
   return (
     <Wrap>
       <Inner>
-        <LogoBox>
+        <LogoBox onClick={() => navigate("/mentor/dashboard")}>
           <LOGO />
         </LogoBox>
 
@@ -56,6 +58,8 @@ const LogoBox = styled.div`
   align-items: center;
   justify-content: center;
   ${typography.t16m}
+
+  cursor: pointer;
 `;
 
 export default Header;
