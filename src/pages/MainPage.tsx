@@ -27,6 +27,8 @@ import { dateUtils } from "../utils/dateUtils";
 import type { ImageMarkerData } from "../components/mentee/PhotoUploadOverlay";
 import type { DashboardSummaryData } from "../components/mentee/Dashboard";
 import FeedbackDetailOverlay from "../components/mentee/FeedbackDetailOverlay";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getNotifications } from "../api/alarm";
 
 const MobileScreen = styled.div`
   min-width: 375px;
@@ -41,19 +43,33 @@ const MobileScreen = styled.div`
   overflow: hidden;
 `;
 
+const CalendarAndTodoWrapper = styled.div<{ $mode: "week" | "month" }>`
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+  min-height: 0;
+
+  /* 주간일 때만 간격 유지 */
+  gap: ${({ $mode }) => ($mode === "week" ? "16px" : "0")};
+`;
+
 const DashboardWrapper = styled.div`
   width: 100%;
-  height: 150px;
+  height: 135px;
   box-sizing: border-box;
-  padding: 18px 16px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--color-gray-100);
 `;
 
-const TodoSectionWrapper = styled.div`
+const TodoSectionWrapper = styled.div<{ $lock: boolean }>`
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+
+  ${({ $lock }) => ($lock ? "pointer-events: none;" : "")}
 `;
 
 const ToggleSwitchWrapper = styled.div`
@@ -68,7 +84,7 @@ const ToggleSwitchWrapper = styled.div`
 `;
 
 const ToggleSwitchLabel = styled.p`
-  ${typography.t16m}
+  ${typography.t16sb}
   color: var(--color-gray-500);
   margin-right: 8px;
 
@@ -80,11 +96,17 @@ const ToggleSwitchLabel = styled.p`
   }
 `;
 
-const SubjectListWrapper = styled.div`
+const SubjectListWrapper = styled.div<{ $lock: boolean }>`
   flex: 1;
-  overflow-y: auto;
+
+  min-height: 0;
+
+  overflow-y: ${({ $lock }) => ($lock ? "hidden" : "auto")};
   padding: 8px 16px;
   box-sizing: border-box;
+
+  /* 스크롤 잠금 중엔 터치 스크롤도 차단 */
+  ${({ $lock }) => ($lock ? "touch-action: none;" : "")}
 
   &::-webkit-scrollbar {
     display: none;
@@ -108,6 +130,21 @@ interface FeedbackDetailInfo {
 }
 
 const MainPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [hasUnread, setHasUnread] = useState(false);
+  const [calendarViewMode, setCalendarViewMode] = useState<"week" | "month">(
+    "week",
+  );
+  const [calendarMonthDate, setCalendarMonthDate] = useState<Date>(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [monthRemainingMap, setMonthRemainingMap] = useState<
+    Record<string, number>
+  >({});
+
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"DETAIL" | "FORM">("FORM");
   const [isToggle, setIsToggle] = useState(false);
@@ -139,6 +176,12 @@ const MainPage = () => {
   const [feedbackDetailInfo, setFeedbackDetailInfo] =
     useState<FeedbackDetailInfo | null>(null);
 
+  const anyOverlayOpen =
+    isBottomSheetOpen ||
+    isPhotoUploadOpen ||
+    isFeedbackDetailOpen ||
+    isCompletionModalOpen;
+
   const refreshTasks = async () => {
     try {
       setIsLoading(true);
@@ -165,7 +208,12 @@ const MainPage = () => {
 
   useEffect(() => {
     refreshTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
+
+  useEffect(() => {
+    setCalendarMonthDate(
+      new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
+    );
   }, [selectedDate]);
 
   const handleCardClick = (taskId: number) => {
@@ -230,7 +278,7 @@ const MainPage = () => {
   const handleSavePhotos = async (
     images: string[],
     files: File[],
-    markersData: ImageMarkerData[]
+    markersData: ImageMarkerData[],
   ) => {
     setUploadedImages(images);
     setUploadedFiles(files);
@@ -238,7 +286,7 @@ const MainPage = () => {
     if (files.length > 0 && selectedTaskId) {
       try {
         const uploadResults = await Promise.all(
-          files.map((file) => uploadFile(file, "/proof-shots"))
+          files.map((file) => uploadFile(file, "/proof-shots")),
         );
 
         const proofShots = uploadResults.map((result, idx) => ({
@@ -257,15 +305,21 @@ const MainPage = () => {
     }
   };
 
+  const blurActiveElement = () => {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+  };
+
   const handleToggleDone = (
     taskId: number,
     taskName: string,
-    isCompleted: boolean
+    isCompleted: boolean,
   ) => {
     if (isCompleted) {
       handleCompleteWithoutModal(taskId);
       return;
     }
+
+    blurActiveElement();
     setPendingCompleteTask({ taskId, taskName });
     setIsCompletionModalOpen(true);
   };
@@ -287,7 +341,7 @@ const MainPage = () => {
       await toggleTaskComplete(
         pendingCompleteTask.taskId,
         selectedDate,
-        actualMinutes
+        actualMinutes,
       );
       await refreshTasks();
       setIsCompletionModalOpen(false);
@@ -325,131 +379,226 @@ const MainPage = () => {
     setTimeout(() => setFeedbackDetailInfo(null), 300);
   };
 
+  const getMonthDays = (monthDate: Date) => {
+    const y = monthDate.getFullYear();
+    const m = monthDate.getMonth();
+    const last = new Date(y, m + 1, 0).getDate();
+    return Array.from({ length: last }, (_, i) => new Date(y, m, i + 1));
+  };
+
+  const toKey = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const formatMonthDay = (d: Date) => `${d.getMonth() + 1}월 ${d.getDate()}일`;
+
+  useEffect(() => {
+    if (calendarViewMode !== "month") return;
+
+    let ignore = false;
+
+    (async () => {
+      try {
+        const days = getMonthDays(calendarMonthDate);
+
+        const results = await Promise.all(
+          days.map(async (d) => {
+            const res = await getTasksByDate(d);
+            const remaining = Math.max(
+              0,
+              res.taskAmount - res.completedTaskAmount,
+            );
+            return [toKey(d), remaining] as const;
+          }),
+        );
+
+        if (ignore) return;
+
+        const map: Record<string, number> = {};
+        results.forEach(([k, v]) => {
+          map[k] = v;
+        });
+
+        setMonthRemainingMap(map);
+      } catch (e) {
+        console.error("월간 미완료 개수 로딩 실패", e);
+        if (!ignore) setMonthRemainingMap({});
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [calendarViewMode, calendarMonthDate]);
+
+  const refreshHasUnread = async () => {
+    try {
+      const list = await getNotifications();
+      const has = list.some((n) => n.status !== "READ");
+      setHasUnread(has);
+    } catch (e) {
+      console.error("알림 상태 조회 실패", e);
+      setHasUnread(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshHasUnread();
+  }, [location.key]);
+
   return (
     <MobileScreen>
-      <Header />
-      <Calendar
-        selectedDate={selectedDate}
-        onDateClick={(d) => setSelectedDate(new Date(d))}
+      <Header
+        hasUnread={hasUnread}
+        onClickLogo={() => {
+          // navigate("/")
+        }}
+        onClickBell={() => navigate("/alarm")}
       />
-      <DashboardWrapper>
-        <Dashboard
-          summary={dashboardSummary ?? undefined}
-          loading={isLoading}
-          onClickSubjectStats={() => {
-            // TODO: 과목별 통계 페이지 이동
-            console.log("과목별 통계 클릭");
-          }}
+
+      <CalendarAndTodoWrapper $mode={calendarViewMode}>
+        <Calendar
+          selectedDate={selectedDate}
+          onDateClick={(d) => setSelectedDate(new Date(d))}
+          viewMode={calendarViewMode}
+          onChangeViewMode={setCalendarViewMode}
+          monthDate={calendarMonthDate}
+          onChangeMonthDate={setCalendarMonthDate}
+          remainingCountByDate={monthRemainingMap}
         />
-      </DashboardWrapper>
-      <TodoSectionWrapper>
-        <ToggleSwitchWrapper>
-          <ToggleSwitchLabel>오늘 할 일</ToggleSwitchLabel>
-          <ToggleSwitchLabel>완료한 할 일 보기</ToggleSwitchLabel>
-          <ToggleSwitch on={isToggle} onChange={setIsToggle} />
-        </ToggleSwitchWrapper>
+        {calendarViewMode === "week" ? (
+          <DashboardWrapper>
+            <Dashboard
+              summary={dashboardSummary ?? undefined}
+              loading={isLoading}
+              onClickSubjectStats={() => navigate("/mypage")}
+            />
+          </DashboardWrapper>
+        ) : null}
+        <TodoSectionWrapper $lock={anyOverlayOpen}>
+          <ToggleSwitchWrapper>
+            <ToggleSwitchLabel>
+              {calendarViewMode === "month"
+                ? formatMonthDay(selectedDate)
+                : "오늘 할 일"}
+            </ToggleSwitchLabel>
+            <ToggleSwitchLabel>완료한 할 일 보기</ToggleSwitchLabel>
+            <ToggleSwitch on={isToggle} onChange={setIsToggle} />
+          </ToggleSwitchWrapper>
 
-        <SubjectListWrapper>
-          {SUBJECT_ORDER.map((subject) => {
-            const subjectTasks = tasks.filter(
-              (task) => task.taskSubject === subject
-            );
-            const visibleTasks = isToggle
-              ? subjectTasks
-              : subjectTasks.filter((task) => !task.completed);
+          <SubjectListWrapper $lock={anyOverlayOpen}>
+            {SUBJECT_ORDER.map((subject) => {
+              const subjectTasks = tasks.filter(
+                (task) => task.taskSubject === subject,
+              );
+              const visibleTasks = isToggle
+                ? subjectTasks
+                : subjectTasks.filter((task) => !task.completed);
 
-            return (
-              <SubjectGroup key={subject}>
-                <SubjectAddButton
-                  subject={subject as SubjectKey}
-                  onClick={() => handleAddButtonClick(subject)}
-                />
-                {visibleTasks.map((task) => (
-                  <TodoCard
-                    key={task.taskId}
-                    title={task.taskName}
+              return (
+                <SubjectGroup key={subject}>
+                  <SubjectAddButton
                     subject={subject as SubjectKey}
-                    done={task.completed}
-                    fromMentor={task.createdBy === "ROLE_MENTOR"}
-                    hasFile={task.hasWorksheet}
-                    hasPhoto={task.hasProofShot}
-                    feedback={
-                      task.hasFeedback
-                        ? task.readFeedback
-                          ? "READ"
-                          : "UNREAD"
-                        : "NONE"
-                    }
-                    onToggleDone={() =>
-                      handleToggleDone(
-                        task.taskId,
-                        task.taskName,
-                        task.completed
-                      )
-                    }
-                    onClick={() => handleCardClick(task.taskId)}
+                    onClick={() => handleAddButtonClick(subject)}
                   />
-                ))}
-              </SubjectGroup>
-            );
-          })}
-        </SubjectListWrapper>
-      </TodoSectionWrapper>
+                  {visibleTasks.map((task) => (
+                    <TodoCard
+                      key={task.taskId}
+                      title={task.taskName}
+                      subject={subject as SubjectKey}
+                      done={task.completed}
+                      fromMentor={task.createdBy === "ROLE_MENTOR"}
+                      hasFile={task.hasWorksheet}
+                      hasPhoto={task.hasProofShot}
+                      feedback={
+                        task.hasFeedback
+                          ? task.readFeedback
+                            ? "READ"
+                            : "UNREAD"
+                          : "NONE"
+                      }
+                      onToggleDone={() =>
+                        handleToggleDone(
+                          task.taskId,
+                          task.taskName,
+                          task.completed,
+                        )
+                      }
+                      onClick={() => handleCardClick(task.taskId)}
+                    />
+                  ))}
+                </SubjectGroup>
+              );
+            })}
+          </SubjectListWrapper>
+        </TodoSectionWrapper>
+      </CalendarAndTodoWrapper>
 
-      <BottomSheet isOpen={isBottomSheetOpen} onClose={closeSheet}>
-        {viewMode === "DETAIL" && selectedTaskId ? (
-          <TaskDetailContainer
-            taskId={selectedTaskId}
-            onEditClick={handleSwitchToEdit}
-            onDeleteSuccess={handleDeleteSuccess}
-            onOpenPhotoUpload={handleOpenPhotoUpload}
-            onOpenFeedbackDetail={(taskInfo) => {
-              openFeedbackDetail({
-                taskId: selectedTaskId,
-                subject: taskInfo.subject,
-                title: taskInfo.title,
-              });
-            }}
-          />
-        ) : (
-          <TodoForm
-            mode={selectedTaskId ? "edit" : "create"}
-            taskId={selectedTaskId}
-            onSubmit={handleFormSubmit}
-          />
-        )}
-      </BottomSheet>
+      {isBottomSheetOpen ? (
+        <BottomSheet isOpen={isBottomSheetOpen} onClose={closeSheet}>
+          {viewMode === "DETAIL" && selectedTaskId ? (
+            <TaskDetailContainer
+              taskId={selectedTaskId}
+              onEditClick={handleSwitchToEdit}
+              onDeleteSuccess={handleDeleteSuccess}
+              onOpenPhotoUpload={handleOpenPhotoUpload}
+              onOpenFeedbackDetail={(taskInfo) => {
+                openFeedbackDetail({
+                  taskId: selectedTaskId,
+                  subject: taskInfo.subject,
+                  title: taskInfo.title,
+                });
+              }}
+            />
+          ) : (
+            <TodoForm
+              mode={selectedTaskId ? "edit" : "create"}
+              taskId={selectedTaskId}
+              onSubmit={handleFormSubmit}
+            />
+          )}
+        </BottomSheet>
+      ) : null}
 
       {/* 사진 업로드 오버레이 */}
-      <PhotoUploadOverlay
-        isOpen={isPhotoUploadOpen}
-        onClose={() => {
-          setIsPhotoUploadOpen(false);
-          closeSheet();
-        }}
-        initialImages={uploadedImages}
-        initialFiles={uploadedFiles}
-        onSave={handleSavePhotos}
-        subject={photoUploadInfo?.subject ?? ""}
-        title={photoUploadInfo?.title ?? ""}
-      />
+      {isPhotoUploadOpen ? (
+        <PhotoUploadOverlay
+          isOpen={isPhotoUploadOpen}
+          onClose={() => {
+            setIsPhotoUploadOpen(false);
+            closeSheet();
+          }}
+          initialImages={uploadedImages}
+          initialFiles={uploadedFiles}
+          onSave={handleSavePhotos}
+          subject={photoUploadInfo?.subject ?? ""}
+          title={photoUploadInfo?.title ?? ""}
+        />
+      ) : null}
 
       {/* 피드백 상세 오버레이 */}
-      <FeedbackDetailOverlay
-        isOpen={isFeedbackDetailOpen}
-        onClose={closeFeedbackDetail}
-        taskId={feedbackDetailInfo?.taskId ?? null}
-        subject={feedbackDetailInfo?.subject ?? ""}
-        title={feedbackDetailInfo?.title ?? ""}
-      />
+      {isFeedbackDetailOpen && feedbackDetailInfo ? (
+        <FeedbackDetailOverlay
+          isOpen={isFeedbackDetailOpen}
+          onClose={closeFeedbackDetail}
+          taskId={feedbackDetailInfo?.taskId ?? null}
+          subject={feedbackDetailInfo?.subject ?? ""}
+          title={feedbackDetailInfo?.title ?? ""}
+        />
+      ) : null}
 
       {/* 완료 시간 입력 모달 */}
-      <TaskCompletionModal
-        isOpen={isCompletionModalOpen}
-        onClose={handleCompletionModalClose}
-        onSave={handleCompletionModalSave}
-        title={pendingCompleteTask?.taskName ?? ""}
-      />
+      {isCompletionModalOpen ? (
+        <TaskCompletionModal
+          isOpen={isCompletionModalOpen}
+          onClose={handleCompletionModalClose}
+          onSave={handleCompletionModalSave}
+          title={pendingCompleteTask?.taskName ?? ""}
+        />
+      ) : null}
     </MobileScreen>
   );
 };

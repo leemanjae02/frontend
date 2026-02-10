@@ -91,7 +91,7 @@ const Item = styled.button<{ $side?: "left" | "right" }>`
     $side === "left" &&
     `
       justify-content: flex-end;
-      padding-right: 5px;
+      padding-right: 5.5px;
     `}
 
   ${({ $side }) =>

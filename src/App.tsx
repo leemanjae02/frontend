@@ -12,6 +12,9 @@ import ResourceCreateForm from "./components/mentor/ResourceCreateForm";
 import ResourceDetailView from "./components/mentor/ResourceDetailView";
 import WeeklyPlanPage from "./pages/mentor/WeeklyPlanPage";
 import FeedbackDetailPage from "./pages/mentor/FeedbackDetailPage";
+import MyPage from "./pages/mentee/MyPage";
+import SubjectProgressPage from "./pages/mentee/SubjectProgressPage";
+import NotificationPage from "./pages/mentee/NotificationPage";
 
 function App() {
   return (
@@ -77,7 +80,9 @@ function App() {
           </ProtectedRoute>
         }
       />
-
+      <Route path="/mypage" element={<MyPage />} />
+      <Route path="/mypage/:subject" element={<SubjectProgressPage />} />
+      <Route path="/alarm" element={<NotificationPage />} />
       {/* 4. 그 외 없는 페이지 처리 */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

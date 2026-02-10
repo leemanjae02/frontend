@@ -9,10 +9,20 @@ import "swiper/css/virtual";
 
 import { dateUtils } from "../utils/dateUtils";
 import ScheduleToggle from "./ScheduleToggle";
+import MonthlyCalendar from "./MonthlyCalendar";
+import YearMonthPickerModal from "./YearMonthPickerModal";
+
+type DateKey = `${number}-${string}-${string}`;
 
 interface CalendarProps {
   selectedDate: Date;
   onDateClick: (date: string) => void;
+
+  viewMode: "week" | "month";
+  onChangeViewMode: (mode: "week" | "month") => void;
+  monthDate: Date;
+  onChangeMonthDate: (nextMonthDate: Date) => void;
+  remainingCountByDate?: Record<DateKey, number>;
 }
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
@@ -33,19 +43,29 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 16px;
+  padding: 5px 16px 20px;
 `;
 
-const DateTitle = styled.h2`
+const TitleButton = styled.button<{ $clickable: boolean }>`
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+
   font-size: 18px;
   font-weight: 700;
   color: var(--color-black);
-  margin: 0;
+
+  cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
+
+  &:active {
+    transform: ${({ $clickable }) => ($clickable ? "translateY(1px)" : "none")};
+  }
 `;
 
-const CalendarContainer = styled.div`
+const CalendarContainer = styled.div<{ $mode: "week" | "month" }>`
   overflow: hidden;
-  height: 57px; /* Weekly 높이 고정 */
+  height: ${({ $mode }) => ($mode === "week" ? "57px" : "")};
   transition: height 0.3s ease;
 `;
 
@@ -81,8 +101,8 @@ const DayItem = styled.div.attrs<{
     color: $isSelected
       ? "var(--color-white)"
       : !$isCurrentMonth
-      ? "var(--color-gray-300)"
-      : "var(--color-black)",
+        ? "var(--color-gray-300)"
+        : "var(--color-black)",
   },
 }))<{ $isSelected: boolean; $isCurrentMonth: boolean }>`
   display: flex;
@@ -97,7 +117,9 @@ const DayItem = styled.div.attrs<{
   border-radius: 12px;
   cursor: pointer;
   will-change: transform, background-color;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 `;
 
 const DayName = styled.span<{ $isSelected: boolean }>`
@@ -132,7 +154,7 @@ const MemoDayItem = memo(
       <DayName $isSelected={isSelected}>{DAY_NAMES[date.getDay()]}</DayName>
       <DayNumber>{date.getDate()}</DayNumber>
     </DayItem>
-  )
+  ),
 );
 
 MemoDayItem.displayName = "MemoDayItem";
@@ -166,7 +188,7 @@ const WeekSlide = memo(
         })}
       </WeekRow>
     );
-  }
+  },
 );
 
 WeekSlide.displayName = "WeekSlide";
@@ -182,13 +204,29 @@ const getWeekDataByIndex = (index: number, initialDate: Date): Date[] => {
   return getRollingWeekDays(targetDate);
 };
 
-const Calendar = ({ selectedDate, onDateClick }: CalendarProps) => {
+function formatYMD(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const Calendar = ({
+  selectedDate,
+  onDateClick,
+  viewMode,
+  onChangeViewMode,
+  monthDate,
+  onChangeMonthDate,
+  remainingCountByDate,
+}: CalendarProps) => {
   const [initialDate] = useState(() => new Date());
 
   const [currentWeekIndex, setCurrentWeekIndex] = useState(INITIAL_INDEX);
-  const [viewMode, setViewMode] = useState<"week" | "month">("week");
 
   const swiperRef = useRef<SwiperType | null>(null);
+
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const referenceDate = useMemo(() => {
     const weekOffset = currentWeekIndex - INITIAL_INDEX;
@@ -201,57 +239,129 @@ const Calendar = ({ selectedDate, onDateClick }: CalendarProps) => {
 
   const handleDateClick = useCallback(
     (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const formattedDate = `${year}-${month}-${day}`;
-
-      onDateClick(formattedDate);
+      onDateClick(formatYMD(date));
     },
-    [onDateClick]
+    [onDateClick],
+  );
+
+  const headerTitle =
+    viewMode === "week"
+      ? dateUtils.formatHeaderDate(referenceDate)
+      : `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월`;
+
+  const handleChangeViewMode = useCallback(
+    (mode: "week" | "month") => {
+      onChangeViewMode(mode);
+
+      if (mode === "month") {
+        onChangeMonthDate(
+          new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
+        );
+      }
+
+      if (mode === "week") {
+        setIsPickerOpen(false);
+      }
+    },
+    [onChangeViewMode, onChangeMonthDate, selectedDate],
+  );
+
+  const handleSelectDateInMonth = useCallback(
+    (next: Date) => {
+      if (
+        next.getFullYear() !== monthDate.getFullYear() ||
+        next.getMonth() !== monthDate.getMonth()
+      ) {
+        onChangeMonthDate(new Date(next.getFullYear(), next.getMonth(), 1));
+      }
+      handleDateClick(next);
+    },
+    [handleDateClick, monthDate, onChangeMonthDate],
+  );
+
+  const handlePickMonth = useCallback(
+    (year: number, monthIndex0: number) => {
+      const nextMonth = new Date(year, monthIndex0, 1);
+      onChangeMonthDate(nextMonth);
+      setIsPickerOpen(false);
+
+      if (
+        selectedDate.getFullYear() !== year ||
+        selectedDate.getMonth() !== monthIndex0
+      ) {
+        onDateClick(formatYMD(nextMonth));
+      }
+    },
+    [onChangeMonthDate, onDateClick, selectedDate],
   );
 
   return (
     <Wrapper>
       <Header>
-        <DateTitle>{dateUtils.formatHeaderDate(referenceDate)}</DateTitle>
-        <ScheduleToggle
-          value={viewMode}
-          onChange={(mode) => setViewMode(mode)}
-        />
+        <TitleButton
+          type="button"
+          $clickable={viewMode === "month"}
+          onClick={() => {
+            if (viewMode === "month") setIsPickerOpen(true);
+          }}
+          aria-label="년/월 선택"
+        >
+          {headerTitle}
+        </TitleButton>
+
+        <ScheduleToggle value={viewMode} onChange={handleChangeViewMode} />
       </Header>
 
-      <CalendarContainer>
-        <SwiperWrapper>
-          <Swiper
-            modules={[Virtual]}
-            virtual
-            spaceBetween={8}
-            onSwiper={(swiper) => {
-              swiperRef.current = swiper;
-            }}
-            onSlideChange={handleSlideChange}
-            initialSlide={INITIAL_INDEX}
-            slidesPerView={1}
-            speed={300}
-            touchRatio={1}
-            resistanceRatio={0.7}
-          >
-            {Array.from({ length: TOTAL_WEEKS }, (_, index) => {
-              return (
-                <SwiperSlide key={index} virtualIndex={index}>
-                  <WeekSlide
-                    weekDates={getWeekDataByIndex(index, initialDate)}
-                    selectedDate={selectedDate}
-                    referenceMonth={referenceDate.getMonth()}
-                    onDateClick={handleDateClick}
-                  />
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
-        </SwiperWrapper>
+      <CalendarContainer $mode={viewMode}>
+        {viewMode === "week" ? (
+          <SwiperWrapper>
+            <Swiper
+              modules={[Virtual]}
+              virtual
+              spaceBetween={8}
+              onSwiper={(swiper) => {
+                swiperRef.current = swiper;
+              }}
+              onSlideChange={handleSlideChange}
+              initialSlide={INITIAL_INDEX}
+              slidesPerView={1}
+              speed={300}
+              touchRatio={1}
+              resistanceRatio={0.7}
+            >
+              {Array.from({ length: TOTAL_WEEKS }, (_, index) => {
+                return (
+                  <SwiperSlide key={index} virtualIndex={index}>
+                    <WeekSlide
+                      weekDates={getWeekDataByIndex(index, initialDate)}
+                      selectedDate={selectedDate}
+                      referenceMonth={referenceDate.getMonth()}
+                      onDateClick={handleDateClick}
+                    />
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+          </SwiperWrapper>
+        ) : (
+          <MonthlyCalendar
+            selectedDate={selectedDate}
+            monthDate={monthDate}
+            remainingCountByDate={remainingCountByDate}
+            onSelectDate={handleSelectDateInMonth}
+          />
+        )}
       </CalendarContainer>
+
+      {viewMode === "month" && isPickerOpen ? (
+        <YearMonthPickerModal
+          baseMonth={monthDate}
+          minYear={2020}
+          maxYear={2035}
+          onClose={() => setIsPickerOpen(false)}
+          onPick={handlePickMonth}
+        />
+      ) : null}
     </Wrapper>
   );
 };

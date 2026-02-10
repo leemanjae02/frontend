@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { typography } from "../../styles/typography";
 import Input from "../Input";
 import Button from "../Button";
+import { createPortal } from "react-dom";
 
 interface TaskCompletionModalProps {
   isOpen: boolean;
@@ -12,18 +13,17 @@ interface TaskCompletionModalProps {
 }
 
 const Overlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed;
+  inset: 0;
+
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   z-index: 1000;
-  width: 100%;
 `;
 
 const ModalContainer = styled.div`
@@ -73,28 +73,33 @@ const TaskCompletionModal = ({
 }: TaskCompletionModalProps) => {
   const [duration, setDuration] = useState("");
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    setDuration("");
+  }, [isOpen]);
 
-  const handleOverlayClick = () => {
+  const safeClose = () => {
     setDuration("");
     onClose();
   };
 
+  const handleOverlayClick = () => {
+    safeClose();
+  };
   const handleModalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   const handleSave = () => {
     const time = parseInt(duration, 10);
-    if (!isNaN(time) && time > 0) {
+    if (Number.isFinite(time) && time > 0) {
       onSave(time);
-      setDuration("");
+      safeClose();
     }
   };
 
   const handleCancel = () => {
-    setDuration("");
-    onClose();
+    safeClose();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +111,9 @@ const TaskCompletionModal = ({
 
   const isSaveDisabled = !duration || parseInt(duration, 10) <= 0;
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <Overlay onClick={handleOverlayClick}>
       <ModalContainer onClick={handleModalClick}>
         <HeaderGroup>
@@ -141,7 +148,8 @@ const TaskCompletionModal = ({
           </ButtonItem>
         </ButtonGroup>
       </ModalContainer>
-    </Overlay>
+    </Overlay>,
+    document.body,
   );
 };
 
