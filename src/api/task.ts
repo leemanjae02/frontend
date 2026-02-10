@@ -20,6 +20,7 @@ export interface DailyTask {
   hasFeedback: boolean;
   hasWorksheet: boolean;
   hasProofShot: boolean;
+  resource: boolean;
 }
 
 export interface TaskListResponse {
@@ -31,10 +32,16 @@ export interface TaskListResponse {
 }
 
 // 1-2. 목록 조회 API 함수 (전체 응답 반환)
-export const getTasksByDate = async (date: Date): Promise<TaskListResponse> => {
+export const getTasksByDate = async (
+  date: Date,
+  includeResources?: boolean
+): Promise<TaskListResponse> => {
   try {
     const { data } = await axiosInstance.get<TaskListResponse>("/tasks", {
-      params: { date: dateUtils.formatToAPIDate(date) },
+      params: {
+        date: dateUtils.formatToAPIDate(date),
+        includeResources,
+      },
     });
     return data;
   } catch (error) {

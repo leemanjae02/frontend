@@ -17,10 +17,11 @@ const SUBJECT_LABEL: Record<SubjectKey, string> = {
   KOREAN: "국어",
   ENGLISH: "영어",
   MATH: "수학",
+  RESOURCE: "자료",
 };
 
 function isSubjectKey(v: string): v is SubjectKey {
-  return v === "KOREAN" || v === "ENGLISH" || v === "MATH";
+  return v === "KOREAN" || v === "ENGLISH" || v === "MATH" || v === "RESOURCE";
 }
 
 const SubjectProgressPage = () => {
@@ -48,10 +49,15 @@ const SubjectProgressPage = () => {
     (async () => {
       try {
         setLoading(true);
-        const res = await getTasksByDate(new Date());
+        const res = await getTasksByDate(new Date(), false);
         if (ignore) return;
 
-        const filtered = res.tasks.filter((t) => t.taskSubject === subject);
+        const filtered = res.tasks.filter((t) => {
+          if (subject === "RESOURCE") {
+            return t.isResource;
+          }
+          return t.taskSubject === subject && !t.isResource;
+        });
         setTodayTasks(filtered);
       } catch (e) {
         console.error(e);

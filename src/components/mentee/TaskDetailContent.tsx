@@ -199,7 +199,8 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const shouldShowUpload = !data.mentorFeedback;
+  const shouldShowUpload =
+    !data.mentorFeedback && data.subjectKey !== "RESOURCE";
 
   const subjectColor =
     SUBJECT_COLORS[data.subjectKey as SubjectKey] || "var(--color-gray-400)";

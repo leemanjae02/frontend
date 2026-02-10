@@ -2,8 +2,7 @@ import styled from "styled-components";
 import { typography } from "../styles/typography";
 import plus from "../assets/images/icon/plus-1.svg";
 
-export type SubjectKey1 = "KOREAN" | "ENGLISH" | "MATH" | "RESOURCE";
-export type SubjectKey = "KOREAN" | "ENGLISH" | "MATH";
+export type SubjectKey = "KOREAN" | "ENGLISH" | "MATH" | "RESOURCE";
 
 interface Props {
   subject: SubjectKey;
@@ -12,11 +11,11 @@ interface Props {
   className?: string;
 }
 
-const SUBJECT_CONFIG: Record<SubjectKey1, { label: string; color: string }> = {
+const SUBJECT_CONFIG: Record<SubjectKey, { label: string; color: string }> = {
   KOREAN: { label: "국어", color: "var(--color-orange-500)" },
   ENGLISH: { label: "영어", color: "var(--color-pink-500)" },
   MATH: { label: "수학", color: "var(--color-blue-500)" },
-  RESOURCE: { label: "자료", color: "var(--color-gray-500)" },
+  RESOURCE: { label: "자료", color: "var(--color-gray-600)" },
 };
 
 const SubjectAddButton = ({
@@ -26,51 +25,57 @@ const SubjectAddButton = ({
   className,
 }: Props) => {
   const cfg = SUBJECT_CONFIG[subject];
+  const isResource = subject === "RESOURCE";
 
   return (
     <Wrap
       type="button"
-      onClick={onClick}
+      onClick={isResource ? undefined : onClick}
       disabled={disabled}
       className={className}
+      $isResource={isResource}
     >
       <Label $color={cfg.color}>{cfg.label}</Label>
-      <PlusCircle>
-        <Icon src={plus} alt="" />
-      </PlusCircle>
+      {!isResource && (
+        <PlusCircle>
+          <Icon src={plus} alt="" />
+        </PlusCircle>
+      )}
     </Wrap>
   );
 };
 
-const Wrap = styled.button`
-  width: 80px;
+const Wrap = styled.button<{ $isResource?: boolean }>`
+  width: ${({ $isResource }) => ($isResource ? "52px" : "80px")};
   height: 38px;
-  padding: 9px 7px;
+  padding: ${({ $isResource }) => ($isResource ? "9px 12px" : "9px 7px")};
 
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: ${({ $isResource }) =>
+    $isResource ? "center" : "space-around"};
 
   border: 0;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-gray-100) 50%, transparent);
 
-  cursor: pointer;
+  cursor: ${({ $isResource }) => ($isResource ? "default" : "pointer")};
   user-select: none;
+  pointer-events: ${({ $isResource }) => ($isResource ? "none" : "auto")};
 
   transition: transform 80ms ease;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
+    transform: ${({ $isResource }) => ($isResource ? "none" : "translateY(-1px)")};
   }
 
   &:active:not(:disabled) {
-    transform: translateY(1px);
+    transform: ${({ $isResource }) => ($isResource ? "none" : "translateY(1px)")};
   }
 
   &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    opacity: ${({ $isResource }) => ($isResource ? "1" : "0.6")};
+    cursor: ${({ $isResource }) => ($isResource ? "default" : "not-allowed")};
     box-shadow: none;
     transform: none;
   }
