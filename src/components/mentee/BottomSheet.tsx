@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 
 interface BottomSheetProps {
@@ -8,13 +9,10 @@ interface BottomSheetProps {
 }
 
 const Overlay = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.4);
-  z-index: 90;
+  z-index: 10000;
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
   pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
   transition: opacity 0.3s ease;
@@ -33,19 +31,24 @@ const BottomSheetWrapper = styled.div.attrs<{
   $dragY: number;
   $isDragging: boolean;
 }>`
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
+  right: 0;
+  margin: 0 auto;
   width: 100%;
-  z-index: 100;
+  max-width: 430px;
+  z-index: 10001;
   transition: ${({ $isDragging }) =>
     $isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)"};
+
+  pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
 `;
 
 const Container = styled.div`
   width: 100%;
   min-height: 200px;
-  max-height: 90vh;
+  max-height: calc(var(--vh, 100dvh) - 40px);
   height: auto;
   background-color: var(--color-white);
   border-radius: 20px 20px 0 0;
@@ -88,22 +91,20 @@ const BottomSheet = ({ isOpen, onClose, children }: BottomSheetProps) => {
   const startYRef = useRef(0);
   const currentDyRef = useRef(0);
 
-  // 바텀시트가 닫힐 때 dragY 초기화
   useEffect(() => {
     if (!isOpen) {
-      // 렌더링 직후가 아니라, 잠깐의 텀을 두고 실행하여 충돌 방지
-      // CSS transition 시간(0.3s)만큼 기다렸다가 초기화하면 애니메이션 측면에서도 더 안전함
       const timer = setTimeout(() => {
         setDragY(0);
       }, 300);
-
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    e.preventDefault();
+    // 입력창 클릭 시에는 드래그 방지
+    if ((e.target as HTMLElement).closest("input, textarea, button")) return;
 
+    e.preventDefault();
     startYRef.current = e.clientY;
     currentDyRef.current = 0;
     setIsDragging(true);
@@ -117,23 +118,18 @@ const BottomSheet = ({ isOpen, onClose, children }: BottomSheetProps) => {
     const onUp = () => {
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
-      document.removeEventListener("pointercancel", onUp);
-
       setIsDragging(false);
-
-      if (currentDyRef.current > DRAG_CLOSE_THRESHOLD) {
-        onClose();
-      } else {
-        setDragY(0);
-      }
+      if (currentDyRef.current > DRAG_CLOSE_THRESHOLD) onClose();
+      else setDragY(0);
     };
 
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp);
-    document.addEventListener("pointercancel", onUp);
   };
 
-  return (
+  if (!isOpen && dragY === 0) return null;
+
+  return createPortal(
     <>
       <Overlay $isOpen={isOpen} onClick={onClose} />
       <BottomSheetWrapper
@@ -141,14 +137,15 @@ const BottomSheet = ({ isOpen, onClose, children }: BottomSheetProps) => {
         $dragY={dragY}
         $isDragging={isDragging}
       >
-        <Container>
-          <HandleBarArea onPointerDown={handlePointerDown}>
+        <Container onPointerDown={handlePointerDown}>
+          <HandleBarArea>
             <HandleBar />
           </HandleBarArea>
           {children}
         </Container>
       </BottomSheetWrapper>
-    </>
+    </>,
+    document.body
   );
 };
 

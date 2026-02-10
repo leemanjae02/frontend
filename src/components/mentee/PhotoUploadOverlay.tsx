@@ -9,6 +9,7 @@ import ButtonSmall from "../ButtonSmall";
 import TodoDetailHeader from "./TodoDetailHeader";
 import QuestionForm from "./QuestionForm";
 import type { QuestionMarker } from "../../api/file";
+import { fetchProofShots, getFileUrl } from "../../api/file";
 import type { SubjectKey } from "../SubjectAddButton";
 
 import Indicator from "./Indicator";
@@ -17,7 +18,7 @@ import NumberBadge from "../NumberBadge";
 // 이미지별 마커 데이터 타입
 export interface ImageMarkerData {
   imageUrl: string;
-  file: File;
+  file?: File;
   fileId?: number; // 업로드 후 서버에서 받은 ID
   markers: QuestionMarker[];
 }
@@ -25,12 +26,13 @@ export interface ImageMarkerData {
 interface PhotoUploadOverlayProps {
   isOpen: boolean;
   onClose: () => void;
+  taskId?: number | null;
   initialImages: string[];
   initialFiles?: File[];
   onSave: (
     finalImages: string[],
     files: File[],
-    markersData: ImageMarkerData[],
+    markersData: ImageMarkerData[]
   ) => void;
   subject: string;
   title: string;
@@ -103,6 +105,15 @@ const EmptyState = styled.div`
   color: var(--color-gray-500);
   ${typography.t14r}
   margin-bottom: 60px;
+`;
+
+const LoadingWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  ${typography.t14r}
 `;
 
 const CarouselContainer = styled.div<{ $isDragging: boolean }>`
@@ -241,6 +252,7 @@ const WarningToast = styled.div`
 const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
   isOpen,
   onClose,
+  taskId,
   initialImages,
   initialFiles = [],
   onSave,
@@ -249,6 +261,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
 }) => {
   const [imageData, setImageData] = useState<ImageMarkerData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 질문 입력 팝업 상태
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -257,7 +270,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     y: number;
   } | null>(null);
   const [editingMarkerIndex, setEditingMarkerIndex] = useState<number | null>(
-    null,
+    null
   );
 
   // 제한 초과 경고 표시 상태
@@ -278,21 +291,57 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
 
   // 초기화
   useEffect(() => {
-    if (isOpen) {
-      const initialData: ImageMarkerData[] = initialImages.map((url, idx) => ({
-        imageUrl: url,
-        file: initialFiles[idx],
-        markers: [],
-      }));
-      setImageData(initialData);
-      setCurrentIndex(0);
-      setIsPopupOpen(false);
-      setPendingPosition(null);
-      setEditingMarkerIndex(null);
-      setShowLimitWarning(false); // 초기화 시 경고 숨김
-    }
+    const loadInitialData = async () => {
+      if (!isOpen) return;
+
+      setIsLoading(true);
+      try {
+        if (taskId) {
+          // 서버에서 기존 인증샷 조회
+          const response = await fetchProofShots(taskId);
+          if (response.proofShots && response.proofShots.length > 0) {
+            const serverData: ImageMarkerData[] = await Promise.all(
+              response.proofShots.map(async (ps) => ({
+                imageUrl: await getFileUrl(ps.imageFileId),
+                fileId: ps.imageFileId,
+                markers: (ps.questions || []).map((q) => ({
+                  content: q.content,
+                  percentX: q.percentX,
+                  percentY: q.percentY,
+                })),
+              }))
+            );
+            setImageData(serverData);
+          } else {
+            setImageData([]);
+          }
+        } else {
+          // 로컬 데이터 초기화
+          const initialData: ImageMarkerData[] = initialImages.map(
+            (url, idx) => ({
+              imageUrl: url,
+              file: initialFiles[idx],
+              markers: [],
+            })
+          );
+          setImageData(initialData);
+        }
+      } catch (error) {
+        console.error("데이터 로딩 실패:", error);
+        setImageData([]);
+      } finally {
+        setIsLoading(false);
+        setCurrentIndex(0);
+        setIsPopupOpen(false);
+        setPendingPosition(null);
+        setEditingMarkerIndex(null);
+        setShowLimitWarning(false);
+      }
+    };
+
+    loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, taskId]);
 
   // 파일 선택 처리
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -401,7 +450,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     // 드래그 여부 확인 (5px 이상 움직였으면 클릭 무시)
     const dist = Math.sqrt(
       Math.pow(e.clientX - dragStartPos.current.x, 2) +
-        Math.pow(e.clientY - dragStartPos.current.y, 2),
+        Math.pow(e.clientY - dragStartPos.current.y, 2)
     );
     if (dist > 5) return;
 
@@ -426,11 +475,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
             ? {
                 ...data,
                 markers: data.markers.map((marker, mIdx) =>
-                  mIdx === editingMarkerIndex ? { ...marker, content } : marker,
+                  mIdx === editingMarkerIndex ? { ...marker, content } : marker
                 ),
               }
-            : data,
-        ),
+            : data
+        )
       );
     } else if (pendingPosition) {
       const newMarker: QuestionMarker = {
@@ -442,8 +491,8 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
         prev.map((data, idx) =>
           idx === currentIndex
             ? { ...data, markers: [...data.markers, newMarker] }
-            : data,
-        ),
+            : data
+        )
       );
     }
 
@@ -465,11 +514,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
           ? {
               ...data,
               markers: data.markers.filter(
-                (_, mIdx) => mIdx !== editingMarkerIndex,
+                (_, mIdx) => mIdx !== editingMarkerIndex
               ),
             }
-          : data,
-      ),
+          : data
+      )
     );
     setIsPopupOpen(false);
     setEditingMarkerIndex(null);
@@ -509,7 +558,9 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
       </HeaderWrapper>
 
       <Content>
-        {!hasImages ? (
+        {isLoading ? (
+          <LoadingWrapper>사진 정보를 불러오는 중...</LoadingWrapper>
+        ) : !hasImages ? (
           <EmptyState>
             <div>아직 업로드된 사진이 없어요.</div>
             <div>카메라로 과제 수행 결과를 찍어 올려주세요</div>

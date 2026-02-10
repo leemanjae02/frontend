@@ -284,6 +284,7 @@ const MainPage = () => {
     subject: string;
     title: string;
   }) => {
+    setIsBottomSheetOpen(false); // 바텀시트 닫기
     setPhotoUploadInfo(taskInfo);
     setIsPhotoUploadOpen(true);
   };
@@ -296,24 +297,39 @@ const MainPage = () => {
     setUploadedImages(images);
     setUploadedFiles(files);
 
-    if (files.length > 0 && selectedTaskId) {
+    if (selectedTaskId) {
       try {
-        const uploadResults = await Promise.all(
-          files.map((file) => uploadFile(file, "/proof-shots")),
+        const proofShots = await Promise.all(
+          markersData.map(async (data) => {
+            if (data.file) {
+              // 새 파일인 경우 업로드 후 fileId 획득
+              const uploadResult = await uploadFile(data.file, "/proof-shots");
+              return {
+                imageFileId: uploadResult.fileId,
+                questions: data.markers,
+              };
+            } else if (data.fileId) {
+              // 이미 서버에 있는 파일인 경우 기존 fileId 유지
+              return {
+                imageFileId: data.fileId,
+                questions: data.markers,
+              };
+            }
+            return null;
+          }),
         );
 
-        const proofShots = uploadResults.map((result, idx) => ({
-          imageFileId: result.fileId,
-          questions: markersData[idx]?.markers || [],
-        }));
+        const validProofShots = proofShots.filter((ps) => ps !== null);
 
-        await submitProofShots(selectedTaskId, { proofShots });
+        await submitProofShots(selectedTaskId, {
+          proofShots: validProofShots as any,
+        });
 
-        alert("인증 사진이 업로드되었습니다.");
+        alert("인증 사진이 저장되었습니다.");
         await refreshTasks();
       } catch (error) {
-        console.error("사진 업로드 실패:", error);
-        alert("사진 업로드에 실패했습니다.");
+        console.error("사진 저장 실패:", error);
+        alert("사진 저장에 실패했습니다.");
       }
     }
   };
@@ -570,18 +586,21 @@ const MainPage = () => {
       </BottomSheet>
 
       {/* 사진 업로드 오버레이 */}
-      <PhotoUploadOverlay
-        isOpen={isPhotoUploadOpen}
-        onClose={() => {
-          setIsPhotoUploadOpen(false);
-          closeSheet();
-        }}
-        initialImages={uploadedImages}
-        initialFiles={uploadedFiles}
-        onSave={handleSavePhotos}
-        subject={photoUploadInfo?.subject ?? ""}
-        title={photoUploadInfo?.title ?? ""}
-      />
+      {isPhotoUploadOpen && (
+        <PhotoUploadOverlay
+          isOpen={isPhotoUploadOpen}
+          onClose={() => {
+            setIsPhotoUploadOpen(false);
+            closeSheet();
+          }}
+          taskId={selectedTaskId}
+          initialImages={uploadedImages}
+          initialFiles={uploadedFiles}
+          onSave={handleSavePhotos}
+          subject={photoUploadInfo?.subject ?? ""}
+          title={photoUploadInfo?.title ?? ""}
+        />
+      )}
 
       {/* 피드백 상세 오버레이 */}
       <FeedbackDetailOverlay

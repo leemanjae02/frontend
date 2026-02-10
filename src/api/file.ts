@@ -150,6 +150,32 @@ export interface SubmitProofShotsRequest {
   proofShots: ProofShotData[];
 }
 
+// 인증샷 조회 응답 타입
+export interface ProofShotResponse {
+  taskId: number;
+  name: string;
+  subject: string;
+  proofShots: ProofShotData[];
+}
+
+/**
+ * 인증샷 및 질문 마커 조회
+ * @param taskId 과제 ID
+ */
+export const fetchProofShots = async (
+  taskId: number,
+): Promise<ProofShotResponse> => {
+  try {
+    const { data } = await axiosInstance.get<ProofShotResponse>(
+      `/tasks/${taskId}/submit`,
+    );
+    return data;
+  } catch (error) {
+    console.error("인증샷 조회 실패:", error);
+    throw error;
+  }
+};
+
 /**
  * 인증샷 및 질문 마커 저장
  * @param taskId 과제 ID
