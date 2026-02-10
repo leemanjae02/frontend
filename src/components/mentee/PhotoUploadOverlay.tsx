@@ -140,6 +140,7 @@ const ImageSlide = styled.div`
   justify-content: center;
   align-items: center;
   scroll-snap-align: center;
+  scroll-snap-stop: always; /* 한 장씩 딱딱 멈추게 함 */
   box-sizing: border-box;
 `;
 
@@ -150,20 +151,21 @@ const ImageWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #fff;
 `;
 
 const PreviewImg = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* 사진 비율 유지하며 전체 보여주기 */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 
   /* 모바일 기본 동작 완벽 차단 */
   touch-action: none;
   user-select: none;
   -webkit-user-drag: none;
-  -webkit-touch-callout: none; /* 롱클릭 시스템 메뉴 방지 */
-  pointer-events: auto; /* 클릭은 가능하게 */
+  -webkit-touch-callout: none;
+  pointer-events: auto;
 `;
 
 const StyledIndicatorWrapper = styled.div`
