@@ -48,13 +48,11 @@ const BottomSheetWrapper = styled.div.attrs<{
 const Container = styled.div`
   width: 100%;
   min-height: 200px;
-  max-height: calc(
-    var(--vh, 100dvh) - 40px
-  ); /* 키보드가 올라왔을 때 화면을 넘지 않도록 제한 */
+  max-height: calc(var(--vh, 100dvh) - 40px);
   height: auto;
   background-color: var(--color-white);
   border-radius: 20px 20px 0 0;
-  padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
+  padding: 12px 16px calc(32px + env(safe-area-inset-bottom));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
