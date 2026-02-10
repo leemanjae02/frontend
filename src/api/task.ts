@@ -211,7 +211,7 @@ export const toggleTaskComplete = async (
 
 // [SECTION 7] 할 일 피드백 상세 조회
 
-export type RegisterStatus = "TEMPORARY" | "REGISTERED";
+export type RegisterStatus = "TEMPORARY" | "CONFIRMED";
 
 export interface FeedbackAnnotation {
   annotationId: number;
