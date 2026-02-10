@@ -18,6 +18,7 @@ export interface SubjectTaskItem {
   hasFeedback: boolean;
   hasWorksheet: boolean;
   hasProofShot: boolean;
+  isResource: boolean;
 }
 
 export interface SubjectLearningStatusResponse {

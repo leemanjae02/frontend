@@ -35,6 +35,7 @@ const SUBJECT_COLORS: Record<SubjectKey, string> = {
   KOREAN: "var(--color-orange-500)",
   ENGLISH: "var(--color-pink-500)",
   MATH: "var(--color-blue-500)",
+  RESOURCE: "var(--color-gray-600)",
 };
 
 const TodoCard = ({
@@ -70,17 +71,20 @@ const TodoCard = ({
       disabled={disabled}
       className={className}
       $hasMeta={hasMeta}
+      $isResource={subject === "RESOURCE"}
     >
-      <Left
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <Checkbox
-          checked={done}
-          onChange={onToggleDone ? () => onToggleDone() : undefined}
-          checkedColor={checkedColor}
-        />
-      </Left>
+      {subject !== "RESOURCE" && (
+        <Left
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <Checkbox
+            checked={done}
+            onChange={onToggleDone ? () => onToggleDone() : undefined}
+            checkedColor={checkedColor}
+          />
+        </Left>
+      )}
 
       <Center>
         <TitleRow>
@@ -107,7 +111,7 @@ const TodoCard = ({
   );
 };
 
-const Wrap = styled.button<{ $hasMeta: boolean }>`
+const Wrap = styled.button<{ $hasMeta: boolean; $isResource: boolean }>`
   width: 100%;
   min-height: 56px;
 
@@ -118,7 +122,8 @@ const Wrap = styled.button<{ $hasMeta: boolean }>`
   background: var(--color-white);
 
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: ${({ $isResource }) =>
+    $isResource ? "1fr auto" : "auto 1fr auto"};
   column-gap: 12px;
   align-items: ${({ $hasMeta }) => ($hasMeta ? "start" : "center")};
 

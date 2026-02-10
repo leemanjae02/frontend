@@ -20,6 +20,7 @@ export interface DailyTask {
   hasFeedback: boolean;
   hasWorksheet: boolean;
   hasProofShot: boolean;
+  resource: boolean;
 }
 
 export interface TaskListResponse {
@@ -31,10 +32,16 @@ export interface TaskListResponse {
 }
 
 // 1-2. 목록 조회 API 함수 (전체 응답 반환)
-export const getTasksByDate = async (date: Date): Promise<TaskListResponse> => {
+export const getTasksByDate = async (
+  date: Date,
+  includeResources?: boolean
+): Promise<TaskListResponse> => {
   try {
     const { data } = await axiosInstance.get<TaskListResponse>("/tasks", {
-      params: { date: dateUtils.formatToAPIDate(date) },
+      params: {
+        date: dateUtils.formatToAPIDate(date),
+        includeResources,
+      },
     });
     return data;
   } catch (error) {
@@ -53,11 +60,13 @@ export const getTasksByDate = async (date: Date): Promise<TaskListResponse> => {
 interface TaskDetailResponse {
   taskId: number;
   taskName: string;
+  uploadedAt: string;
   createdBy: "ROLE_MENTOR" | "ROLE_MENTEE";
   subject: string; // 주의: 목록조회(taskSubject)와 다름
   goalMinutes: number;
   actualMinutes: number;
   hasFeedback: boolean;
+  resource: boolean;
   generalComment: string | null;
   mentorName: string | null;
   worksheets: Array<{
@@ -95,12 +104,14 @@ const transformDetailData = (data: TaskDetailResponse): TaskDetailData => {
 
   return {
     title: data.taskName,
+    uploadedAt: data.uploadedAt,
     subject: subjectMap[data.subject] || data.subject,
     subjectKey: data.subject, // 원본 키 보존 ("KOREAN", "ENGLISH" 등)
     targetTime: data.goalMinutes,
     actualTime: data.actualMinutes > 0 ? data.actualMinutes : undefined,
     isMentorAssigned: data.createdBy === "ROLE_MENTOR",
     hasFeedback: data.hasFeedback,
+    resource: data.resource,
     attachments: [...pdfs, ...links],
     mentorFeedback: data.generalComment
       ? {
