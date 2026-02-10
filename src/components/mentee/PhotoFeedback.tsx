@@ -1,7 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { typography } from "../../styles/typography";
-import NumberBadge from "../NumberBadge";
 
 import chevronDownSrc from "../../assets/images/icon/bottom.svg";
 import chevronUpSrc from "../../assets/images/icon/top.svg";
@@ -46,7 +45,7 @@ const PhotoFeedback = ({
               {items.map((it) => (
                 <Item key={`${photoNumber}-${it.index}`}>
                   <ItemTop>
-                    <NumberBadge value={it.index} variant="feedback" />
+                    <Badge>{it.index}</Badge>
                     <ItemTitle>{it.title}</ItemTitle>
                   </ItemTop>
 
@@ -138,6 +137,18 @@ const ItemDetail = styled.div`
   line-height: 25.2px;
   color: var(--color-black);
   white-space: pre-wrap;
+`;
+
+const Badge = styled.div`
+  width: 30px;
+  height: 30px;
+  border-radius: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  background: var(--color-blue-500);
+  ${typography.t14sb}
 `;
 
 export default PhotoFeedback;

@@ -161,16 +161,3 @@ export const submitProofShots = async (
     throw error;
   }
 };
-
-// url만 조회
-export const getFileUrl = async (fileId: number): Promise<string> => {
-  const { data } = await axiosInstance.get<FileUrlResponse>("/files", {
-    params: { fileId },
-  });
-
-  if (!data?.url) {
-    throw new Error("서버로부터 파일 URL을 받아오지 못했습니다.");
-  }
-
-  return data.url;
-};

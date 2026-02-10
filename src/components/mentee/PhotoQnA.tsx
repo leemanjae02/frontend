@@ -1,7 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { typography } from "../../styles/typography";
-import NumberBadge from "../NumberBadge";
+// import NumberBadge from "../NumberBadge";
 
 import chevronDownSrc from "../../assets/images/icon/bottom.svg";
 import chevronUpSrc from "../../assets/images/icon/top.svg";
@@ -45,7 +45,7 @@ const PhotoQnA = ({
               {items.map((it, idx) => (
                 <Item key={`${it.index}-${idx}`}>
                   <ItemTop>
-                    <NumberBadge value={it.index} variant="question" />
+                    <Badge>{it.index}</Badge>
                   </ItemTop>
 
                   <QuestionText>{it.question}</QuestionText>
@@ -159,6 +159,18 @@ const AnswerText = styled.div`
   ${typography.t14r}
   color: var(--color-gray-700);
   white-space: pre-wrap;
+`;
+
+const Badge = styled.div`
+  width: 30px;
+  height: 30px;
+  border-radius: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  background: var(--color-primary-500);
+  ${typography.t14sb}
 `;
 
 export default PhotoQnA;
