@@ -60,11 +60,13 @@ export const getTasksByDate = async (
 interface TaskDetailResponse {
   taskId: number;
   taskName: string;
+  uploadedAt: string;
   createdBy: "ROLE_MENTOR" | "ROLE_MENTEE";
   subject: string; // 주의: 목록조회(taskSubject)와 다름
   goalMinutes: number;
   actualMinutes: number;
   hasFeedback: boolean;
+  resource: boolean;
   generalComment: string | null;
   mentorName: string | null;
   worksheets: Array<{
@@ -102,12 +104,14 @@ const transformDetailData = (data: TaskDetailResponse): TaskDetailData => {
 
   return {
     title: data.taskName,
+    uploadedAt: data.uploadedAt,
     subject: subjectMap[data.subject] || data.subject,
     subjectKey: data.subject, // 원본 키 보존 ("KOREAN", "ENGLISH" 등)
     targetTime: data.goalMinutes,
     actualTime: data.actualMinutes > 0 ? data.actualMinutes : undefined,
     isMentorAssigned: data.createdBy === "ROLE_MENTOR",
     hasFeedback: data.hasFeedback,
+    resource: data.resource,
     attachments: [...pdfs, ...links],
     mentorFeedback: data.generalComment
       ? {

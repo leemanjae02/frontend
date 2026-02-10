@@ -16,12 +16,14 @@ export interface AttachmentData {
 
 export interface TaskDetailData {
   title: string;
+  uploadedAt: string;
   subject: string;
   subjectKey: string;
   targetTime: number;
   actualTime?: number;
   isMentorAssigned: boolean;
   hasFeedback: boolean;
+  resource: boolean;
   attachments?: AttachmentData[];
   mentorFeedback?: {
     mentorName: string;
@@ -199,8 +201,7 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const shouldShowUpload =
-    !data.mentorFeedback && data.subjectKey !== "RESOURCE";
+  const shouldShowUpload = !data.mentorFeedback && !data.resource;
 
   const subjectColor =
     SUBJECT_COLORS[data.subjectKey as SubjectKey] || "var(--color-gray-400)";
@@ -238,21 +239,29 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
         ))}
       </ResourceList>
 
-      {/* 3. Info */}
+      {/* 3. Info (항상 표시되는 항목과 자료일 때 숨겨지는 항목 구분) */}
       <InfoList>
         <InfoRow>
           <Label>과목</Label>
           <Value>{data.subject}</Value>
         </InfoRow>
         <InfoRow>
-          <Label>목표 설정 시간</Label>
-          <Value>{data.targetTime}분</Value>
+          <Label>업로드 날짜</Label>
+          <Value>{data.uploadedAt?.split("T")[0]}</Value>
         </InfoRow>
-        {data.actualTime !== undefined && (
-          <InfoRow>
-            <Label>실제 소요 시간</Label>
-            <Value>{data.actualTime}분</Value>
-          </InfoRow>
+        {!data.resource && (
+          <>
+            <InfoRow>
+              <Label>목표 설정 시간</Label>
+              <Value>{data.targetTime}분</Value>
+            </InfoRow>
+            {data.actualTime !== undefined && (
+              <InfoRow>
+                <Label>실제 소요 시간</Label>
+                <Value>{data.actualTime}분</Value>
+              </InfoRow>
+            )}
+          </>
         )}
       </InfoList>
 
@@ -276,8 +285,8 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
         </FeedbackBox>
       )}
 
-      {/* 5. Actions (멘토 할당 글이 아닐 때만 수정/삭제 가능) */}
-      {!data.isMentorAssigned && (
+      {/* 5. Actions (멘토 할당 글이 아니고 자료가 아닐 때만 수정/삭제 가능) */}
+      {!data.isMentorAssigned && !data.resource && (
         <ButtonGroup>
           <ActionButton $variant="secondary" onClick={onEdit}>
             수정
