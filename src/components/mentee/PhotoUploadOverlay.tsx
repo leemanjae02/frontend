@@ -123,7 +123,7 @@ const CarouselContainer = styled.div<{ $isDragging: boolean }>`
   overflow-x: auto;
   scroll-snap-type: ${({ $isDragging }) =>
     $isDragging ? "none" : "x mandatory"};
-  padding-bottom: 40px;
+  scroll-behavior: ${({ $isDragging }) => ($isDragging ? "auto" : "smooth")};
 
   &::-webkit-scrollbar {
     display: none;
@@ -135,33 +135,35 @@ const CarouselContainer = styled.div<{ $isDragging: boolean }>`
 const ImageSlide = styled.div`
   flex: 0 0 100%;
   width: 100%;
-  height: 80%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   scroll-snap-align: center;
-  padding: 0 20px;
   box-sizing: border-box;
 `;
 
 const ImageWrapper = styled.div`
   position: relative;
-  display: inline-block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const PreviewImg = styled.img`
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 
-  /* 모바일 기본 동작 방지 */
-  touch-action: none; /* 브라우저 스크롤/확대 방지 */
-  user-select: none; /* 선택 방지 */
-  -webkit-user-drag: none; /* 드래그 방지 */
+  /* 모바일 기본 동작 완벽 차단 */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
   -webkit-touch-callout: none; /* 롱클릭 시스템 메뉴 방지 */
+  pointer-events: auto; /* 클릭은 가능하게 */
 `;
 
 const StyledIndicatorWrapper = styled.div`
@@ -392,7 +394,7 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
   };
 
   // 드래그 이벤트 핸들러
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     isDown.current = true;
     setIsDragging(true); // 스냅 해제 및 커서 변경
     if (carouselRef.current) {
@@ -402,22 +404,22 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
     }
   };
 
-  const handleMouseLeave = () => {
+  const handlePointerLeave = () => {
     isDown.current = false;
     setIsDragging(false); // 스냅 복구
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = () => {
     isDown.current = false;
     setIsDragging(false); // 스냅 복구
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDown.current) return;
-    e.preventDefault();
+    // e.preventDefault(); // PointerEvent에서는 필요 시 조절
     if (carouselRef.current) {
       const x = e.pageX - carouselRef.current.offsetLeft;
-      const walk = (x - startX.current) * 1.5; // 스크롤 속도 조절
+      const walk = (x - startX.current) * 1.8; // 스크롤 속도 조절
       carouselRef.current.scrollLeft = scrollLeft.current - walk;
     }
   };
@@ -447,12 +449,12 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
 
   // 이미지 클릭 - 마커 위치 지정
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    // 드래그 여부 확인 (5px 이상 움직였으면 클릭 무시)
+    // 드래그 여부 확인 (15px 이상 움직였으면 클릭 무시 - 클릭 인식 완화)
     const dist = Math.sqrt(
       Math.pow(e.clientX - dragStartPos.current.x, 2) +
         Math.pow(e.clientY - dragStartPos.current.y, 2)
     );
-    if (dist > 5) return;
+    if (dist > 15) return;
 
     const img = e.currentTarget;
     const rect = img.getBoundingClientRect();
@@ -572,10 +574,11 @@ const PhotoUploadOverlay: React.FC<PhotoUploadOverlayProps> = ({
               ref={carouselRef}
               $isDragging={isDragging}
               onScroll={handleScroll}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseLeave}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
+              onPointerDown={handlePointerDown}
+              onPointerLeave={handlePointerLeave}
+              onPointerUp={handlePointerUp}
+              onPointerMove={handlePointerMove}
+              style={{ touchAction: "pan-y" }} // 가로 스크롤은 우리가 제어, 세로는 브라우저 허용
             >
               {imageData.map((data, idx) => (
                 <ImageSlide key={idx}>
