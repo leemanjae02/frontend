@@ -107,6 +107,22 @@ export const downloadFile = async (
   }
 };
 
+/**
+ * [메인] 파일 URL 조회 함수
+ * fileId를 보내 실제 접근 가능한 URL을 요청
+ */
+export const getFileUrl = async (fileId: number): Promise<string> => {
+  try {
+    const { data } = await axiosInstance.get<FileUrlResponse>("/files", {
+      params: { fileId },
+    });
+    return data.url;
+  } catch (error) {
+    console.error("File URL Fetch Failed:", error);
+    throw error;
+  }
+};
+
 // =============================================================================
 // 인증샷 + 질문 마커 저장 API
 // =============================================================================

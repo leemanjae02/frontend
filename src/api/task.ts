@@ -113,11 +113,11 @@ const transformDetailData = (data: TaskDetailResponse): TaskDetailData => {
 
 // 2-3. 상세 조회 API 함수
 export const fetchTaskDetail = async (
-  taskId: number,
+  taskId: number
 ): Promise<TaskDetailData> => {
   try {
     const { data } = await axiosInstance.get<TaskDetailResponse>(
-      `/tasks/${taskId}/details`,
+      `/tasks/${taskId}/details`
     );
     return transformDetailData(data);
   } catch (error) {
@@ -163,7 +163,7 @@ export interface UpdateTaskRequest {
 
 export const updateTask = async (
   taskId: number,
-  payload: UpdateTaskRequest,
+  payload: UpdateTaskRequest
 ): Promise<void> => {
   try {
     await axiosInstance.put(`/tasks/mentee/${taskId}`, payload);
@@ -196,7 +196,7 @@ export const deleteTask = async (taskId: number): Promise<void> => {
 export const toggleTaskComplete = async (
   taskId: number,
   date: Date,
-  actualMinutes?: number,
+  actualMinutes?: number
 ): Promise<void> => {
   try {
     await axiosInstance.patch(`/tasks/${taskId}/completed`, {
@@ -281,7 +281,7 @@ const subjectLabelMap: Record<string, string> = {
 };
 
 const transformTaskFeedbackData = (
-  data: TaskFeedbackResponse,
+  data: TaskFeedbackResponse
 ): TaskFeedbackDetailData => {
   return {
     taskId: data.taskId,
@@ -303,11 +303,11 @@ const transformTaskFeedbackData = (
 
 // 피드백 상세 조회 API 함수
 export const fetchTaskFeedbackDetail = async (
-  taskId: number,
+  taskId: number
 ): Promise<TaskFeedbackDetailData> => {
   try {
     const { data } = await axiosInstance.get<TaskFeedbackResponse>(
-      `/tasks/${taskId}/feedback`,
+      `/tasks/${taskId}/feedback`
     );
     return transformTaskFeedbackData(data);
   } catch (error) {
@@ -336,16 +336,77 @@ export interface CreateMentorTaskRequest {
 }
 
 export const createTasksByMentor = async (
-  payload: CreateMentorTaskRequest,
+  payload: CreateMentorTaskRequest
 ): Promise<DailyTask[]> => {
   try {
     const { data } = await axiosInstance.post<DailyTask[]>(
       "/tasks/mentor",
-      payload,
+      payload
     );
     return data;
   } catch (error) {
     console.error("멘토 할 일 추가 실패:", error);
+    throw error;
+  }
+};
+
+// =============================================================================
+// [SECTION Y] 할 일 수정 (멘토용)
+// Method: PUT
+// Endpoint: /tasks/mentor/{taskId}
+// =============================================================================
+
+export interface UpdateMentorTaskRequest {
+  subject: string;
+  taskName: string;
+  goalMinutes: number;
+  worksheets?: Array<{ fileId: number }>;
+  columnLinks?: Array<{ link: string }>;
+}
+
+export const updateTaskByMentor = async (
+  taskId: number | string,
+  payload: UpdateMentorTaskRequest
+): Promise<void> => {
+  try {
+    await axiosInstance.put(`/mentors/tasks/${taskId}`, payload);
+  } catch (error) {
+    console.error("멘토 할 일 수정 실패:", error);
+    throw error;
+  }
+};
+
+// =============================================================================
+// [SECTION Z] 할 일 수정을 위한 조회 (멘토용)
+// Method: GET
+// Endpoint: /tasks/{taskId}/edit
+// =============================================================================
+
+export interface TaskEditResponse {
+  subject: string;
+  dates: string[];
+  taskNames: string[];
+  goalMinutes: number;
+  worksheets: Array<{
+    fileId: number;
+    fileName: string;
+    fileContentType: string;
+  }>;
+  columnLinks: Array<{
+    link: string;
+  }>;
+}
+
+export const getTaskForEdit = async (
+  taskId: number | string
+): Promise<TaskEditResponse> => {
+  try {
+    const { data } = await axiosInstance.get<TaskEditResponse>(
+      `/tasks/${taskId}/edit`
+    );
+    return data;
+  } catch (error) {
+    console.error("수정용 할 일 조회 실패:", error);
     throw error;
   }
 };

@@ -41,6 +41,8 @@ type StudyFormPayload = StudyFormTodoPayload | StudyFormResourcePayload;
 
 interface Props {
   mode: Mode;
+  isEdit?: boolean;
+  title?: string;
   submitText: string;
   onSubmit: (payload: StudyFormPayload) => void;
 
@@ -54,10 +56,17 @@ interface Props {
   initialFileId?: number | null;
   initialFileName?: string;
   initialLinkUrl?: string;
+
+  // 추가: Todo 모드 초기값
+  initialDates?: string[];
+  initialTaskNames?: string[];
+  initialGoalMinutes?: number;
 }
 
 const StudyForm = ({
   mode,
+  isEdit = false,
+  title,
   submitText,
   onSubmit,
   showDate = mode === "todo",
@@ -70,6 +79,10 @@ const StudyForm = ({
   initialFileId,
   initialFileName,
   initialLinkUrl,
+
+  initialDates,
+  initialTaskNames,
+  initialGoalMinutes,
 }: Props) => {
   const [subject, setSubject] = useState<SubjectKey>("KOREAN");
   // 날짜
@@ -92,7 +105,6 @@ const StudyForm = ({
   const [didInit, setDidInit] = useState(false);
 
   useEffect(() => {
-    if (mode !== "resource") return;
     if (didInit) return;
 
     const hasAnyInitial =
@@ -101,7 +113,10 @@ const StudyForm = ({
       initialResourceMode ||
       initialFileId != null ||
       initialFileName ||
-      initialLinkUrl;
+      initialLinkUrl ||
+      initialDates ||
+      initialTaskNames ||
+      initialGoalMinutes;
 
     if (!hasAnyInitial) return;
 
@@ -116,9 +131,13 @@ const StudyForm = ({
 
     if (typeof initialLinkUrl === "string") setLinkUrl(initialLinkUrl);
 
+    // Todo 모드 초기값 세팅
+    if (initialDates && initialDates.length > 0) setDates(initialDates);
+    if (initialTaskNames && initialTaskNames.length > 0) setTaskNames(initialTaskNames);
+    if (initialGoalMinutes !== undefined) setGoalMinutes(String(initialGoalMinutes));
+
     setDidInit(true);
   }, [
-    mode,
     didInit,
     initialSubject,
     initialResourceTitle,
@@ -126,6 +145,9 @@ const StudyForm = ({
     initialFileId,
     initialFileName,
     initialLinkUrl,
+    initialDates,
+    initialTaskNames,
+    initialGoalMinutes,
   ]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -302,6 +324,7 @@ const StudyForm = ({
 
   return (
     <Wrap>
+      {title && <FormTitle>{title}</FormTitle>}
       <FormGrid>
         {/* 과목 */}
         <Row>
@@ -412,34 +435,38 @@ const StudyForm = ({
                 할 일 이름 <Required>*</Required>
               </RowLabel>
 
-              <AddBtn>
-                <Button onClick={addTaskName} disabled={!taskNameInput.trim()}>
-                  추가
-                </Button>
-              </AddBtn>
+              {!isEdit && (
+                <AddBtn>
+                  <Button onClick={addTaskName} disabled={!taskNameInput.trim()}>
+                    추가
+                  </Button>
+                </AddBtn>
+              )}
             </RowTop>
 
-            <RowBody>
-              <Input
-                value={taskNameInput}
-                onChange={(e) => setTaskNameInput(e.target.value)}
-                placeholder=""
-                maxLength={50}
-                showCount
-                countPosition="bottom"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTaskName();
-                  }
-                }}
-              />
-            </RowBody>
+            {!isEdit && (
+              <RowBody>
+                <Input
+                  value={taskNameInput}
+                  onChange={(e) => setTaskNameInput(e.target.value)}
+                  placeholder=""
+                  maxLength={50}
+                  showCount
+                  countPosition="bottom"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTaskName();
+                    }
+                  }}
+                />
+              </RowBody>
+            )}
 
             {taskNames.length > 0 && (
               <AddedList>
                 {taskNames.map((name, idx) => (
-                  <AddedItem key={`${name}-${idx}`}>
+                  <AddedItem key={idx} $isEdit={isEdit}>
                     <AddedInputWrap>
                       <Input
                         value={name}
@@ -456,7 +483,7 @@ const StudyForm = ({
                       />
                     </AddedInputWrap>
 
-                    <ButtonMinus onClick={() => removeTaskName(idx)} />
+                    {!isEdit && <ButtonMinus onClick={() => removeTaskName(idx)} />}
                   </AddedItem>
                 ))}
               </AddedList>
@@ -621,6 +648,13 @@ const Wrap = styled.section`
   width: 100%;
 `;
 
+const FormTitle = styled.h3`
+  ${typography.t18sb}
+  color: var(--color-black);
+  margin: 0 0 24px 0;
+  text-align: left;
+`;
+
 const FormGrid = styled.div`
   display: flex;
   flex-direction: column;
@@ -701,9 +735,9 @@ const AddedList = styled.div`
   margin-top: 6px;
 `;
 
-const AddedItem = styled.div`
+const AddedItem = styled.div<{ $isEdit?: boolean }>`
   display: grid;
-  grid-template-columns: 1fr 44px;
+  grid-template-columns: ${({ $isEdit }) => ($isEdit ? "1fr" : "1fr 44px")};
   gap: 12px;
   align-items: start;
 `;

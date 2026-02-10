@@ -11,6 +11,7 @@ export interface PlanItemProps {
   title: string;
   status: LabelStatus; // SubmitLabel의 상태 사용
   hasQuestion?: boolean; // 질문 여부 (아이콘 표시용)
+  isFeedbackCompleted?: boolean; // 피드백 완료 여부
   onFeedbackClick?: () => void;
 }
 
@@ -19,30 +20,31 @@ const PlanItem = ({
   title,
   status,
   hasQuestion = false,
+  isFeedbackCompleted = false,
   onFeedbackClick,
 }: PlanItemProps) => {
   return (
-    <Container>
+    <Container onClick={onFeedbackClick}>
       <Content>
         <Header>
           <SubjectChip subject={subject} />
           <Title>{title}</Title>
-          {hasQuestion && (
-            <QuestionBadge aria-label="질문 있음" />
-          )}
+          {hasQuestion && <QuestionBadge aria-label="질문 있음" />}
         </Header>
         <Footer>
           <SubmitLabel status={status} />
         </Footer>
       </Content>
       <Action>
-        {status === "SUBMITTED" && (
+        {(status === "SUBMITTED" || status === "NOT_SUBMITTED") && (
           <StyledButton
             variant="primary"
-            onClick={onFeedbackClick}
-            title="피드백하기"
+            onClick={(e) => {
+              e.stopPropagation();
+              onFeedbackClick?.();
+            }}
           >
-            피드백하기
+            {isFeedbackCompleted ? "피드백 완료" : "피드백 하기"}
           </StyledButton>
         )}
       </Action>

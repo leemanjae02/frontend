@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import Profile from "./Profile";
 import { typography } from "../../styles/typography";
+import LOGO from "../../assets/images/logo_pc.svg?react";
 
 interface Props {
   mentorName: string;
@@ -11,8 +12,9 @@ const Header = ({ mentorName }: Props) => {
   return (
     <Wrap>
       <Inner>
-        {/* 좌측 임시 로고 */}
-        <LogoBox>설스터디</LogoBox>
+        <LogoBox>
+          <LOGO />
+        </LogoBox>
 
         <Profile name={mentorName} />
       </Inner>
@@ -50,12 +52,9 @@ const Inner = styled.div`
 const LogoBox = styled.div`
   width: 72px;
   height: 40px;
-  background: var(--color-primary-500);
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   ${typography.t16m}
 `;
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import styled from "styled-components";
 import { NavLink, useLocation, useParams } from "react-router-dom";
 import { typography } from "../../styles/typography";
@@ -6,7 +6,6 @@ import { typography } from "../../styles/typography";
 import PlanIcon from "../../assets/images/icon/pen.svg?react";
 import TodoIcon from "../../assets/images/icon/check.svg?react";
 import ResourceIcon from "../../assets/images/icon/report.svg?react";
-import ReportIcon from "../../assets/images/icon/clock.svg?react";
 
 export type MenteeSideMenuKey = "plan" | "todo" | "resources" | "reports";
 
@@ -19,6 +18,7 @@ interface ItemProps {
   icon: React.ReactNode;
   label: string;
   end?: boolean;
+  isActiveForce?: boolean;
 }
 
 const MENU_ITEMS: Array<{
@@ -28,17 +28,16 @@ const MENU_ITEMS: Array<{
   end?: boolean;
 }> = [
   { key: "plan", label: "주간 학습 계획", Icon: PlanIcon },
-  { key: "todo", label: "할 일 등록", Icon: TodoIcon, end: true },
+  { key: "todo", label: "할 일 등록", Icon: TodoIcon },
   { key: "resources", label: "자료 관리", Icon: ResourceIcon },
-  { key: "reports", label: "주간 학습 리포트 발송", Icon: ReportIcon },
 ];
 
-const SideMenuItem = ({ to, icon, label, end = false }: ItemProps) => {
+const SideMenuItem = ({ to, icon, label, end = false, isActiveForce }: ItemProps) => {
   return (
     <ItemLink
       to={to}
       end={end}
-      className={({ isActive }) => (isActive ? "active" : "")}
+      className={({ isActive }) => (isActive || isActiveForce ? "active" : "")}
     >
       <IconBox>{icon}</IconBox>
       <Label>{label}</Label>
@@ -50,29 +49,71 @@ const MenteeSideMenuBar = ({ className }: Props) => {
   const { menteeId } = useParams();
   const location = useLocation();
 
-  useEffect(() => {
-    console.log("[SideBar mounted]");
-    console.log("[SideBar] pathname:", location.pathname);
-  }, []);
+    const isTodoEdit =
 
-  useEffect(() => {
-    console.log("[SideBar pathname changed]", location.pathname);
-  }, [location.pathname]);
+      location.pathname.includes("/todo/") && location.pathname.includes("/edit");
 
-  return (
-    <Wrap className={className}>
-      {MENU_ITEMS.map(({ key, label, Icon, end }) => (
-        <SideMenuItem
-          key={key}
-          to={`/mentor/mentees/${menteeId}/${key}`}
-          icon={<Icon />}
-          label={label}
-          end={end}
-        />
-      ))}
-    </Wrap>
-  );
-};
+  
+
+    return (
+
+      <Wrap className={className}>
+
+        {MENU_ITEMS.map(({ key, label, Icon }) => {
+
+          // 편집 모드여도 사이드바 텍스트는 '할 일 등록' 그대로 유지
+
+          // 단, 활성화(active) 처리를 위해 to 경로는 기본 등록 페이지로 하되
+
+          // NavLink의 isActive 판정은 react-router-dom이 알아서 처리 (하지만 /edit은 하위 경로라 기본적으로 active됨)
+
+          // 만약 명시적으로 처리해야 한다면 className 로직을 수정해야 함.
+
+          // 현재 ItemLink는 NavLink를 쓰고 있으므로 to와 현재 URL이 다르면 active가 안 될 수 있음.
+
+          
+
+          // 요구사항: "그 등록으로 라우팅하면 되고" -> 클릭 시 등록 페이지로 이동
+
+          // "edit 모드여도 사이드바는 할 일 등록이고" -> 텍스트 고정
+
+          
+
+          const isActive = 
+
+              key === 'todo' && isTodoEdit 
+
+              ? true 
+
+              : undefined; // undefined면 NavLink 기본 동작 따름
+
+  
+
+          return (
+
+            <SideMenuItem
+
+              key={key}
+
+              to={`/mentor/mentees/${menteeId}/${key}`}
+
+              icon={<Icon />}
+
+              label={label}
+
+              isActiveForce={isActive}
+
+            />
+
+          );
+
+        })}
+
+      </Wrap>
+
+    );
+
+  };
 
 const Wrap = styled.aside`
   width: 100%;
