@@ -564,7 +564,10 @@ const FeedbackDetailPage = () => {
             <>
               <Divider />
               <SectionHeader>
-                <FormTitle>멘티의 질문</FormTitle>
+                <TitleGroup>
+                  <FormTitle>멘티의 질문</FormTitle>
+                  <Required>*</Required>
+                </TitleGroup>
               </SectionHeader>
               <FeedbackList>
                 {menteeQuestions.map((m) => (
@@ -962,8 +965,14 @@ const SectionHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 20px;
+`;
+
+const TitleGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const WritingCount = styled.span`
