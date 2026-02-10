@@ -152,8 +152,12 @@ const PreviewImg = styled.img`
   height: 100%;
   object-fit: contain;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  user-select: none;
-  -webkit-user-drag: none;
+  
+  /* 모바일 기본 동작 방지 */
+  touch-action: none; /* 브라우저 스크롤/확대 방지 */
+  user-select: none; /* 선택 방지 */
+  -webkit-user-drag: none; /* 드래그 방지 */
+  -webkit-touch-callout: none; /* 롱클릭 시스템 메뉴 방지 */
 `;
 
 const StyledIndicatorWrapper = styled.div`
