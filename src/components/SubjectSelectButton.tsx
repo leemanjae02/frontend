@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
 import { typography } from "../styles/typography";
-import type { SubjectKey } from "./SubjectAddButton";
+import type { SubjectKey1 } from "./SubjectAddButton";
 
 interface SubjectItem {
-  key: SubjectKey;
+  key: SubjectKey1;
   label: string;
   activeBg: string;
   activeBorder?: string;
@@ -14,12 +14,13 @@ const DEFAULT_SUBJECTS: SubjectItem[] = [
   { key: "KOREAN", label: "국어", activeBg: "var(--color-orange-500)" },
   { key: "ENGLISH", label: "영어", activeBg: "var(--color-pink-500)" },
   { key: "MATH", label: "수학", activeBg: "var(--color-blue-500)" },
+  { key: "RESOURCE", label: "자료", activeBg: "var(--color-gray-500)" },
 ];
 
 interface Props {
-  value?: SubjectKey;
-  defaultValue?: SubjectKey;
-  onChange?: (next: SubjectKey) => void;
+  value?: SubjectKey1;
+  defaultValue?: SubjectKey1;
+  onChange?: (next: SubjectKey1) => void;
   subjects?: readonly SubjectItem[];
   disabled?: boolean;
   className?: string;
@@ -34,12 +35,12 @@ const SubjectSelectButton = ({
   className,
 }: Props) => {
   const isControlled = value !== undefined;
-  const [inner, setInner] = useState<SubjectKey>(defaultValue);
-  const selected = isControlled ? (value as SubjectKey) : inner;
+  const [inner, setInner] = useState<SubjectKey1>(defaultValue);
+  const selected = isControlled ? (value as SubjectKey1) : inner;
 
   const items = useMemo(() => subjects, [subjects]);
 
-  const handleSelect = (next: SubjectKey) => {
+  const handleSelect = (next: SubjectKey1) => {
     if (disabled) return;
     if (!isControlled) setInner(next);
     onChange?.(next);

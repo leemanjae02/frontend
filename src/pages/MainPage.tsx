@@ -199,12 +199,6 @@ const MainPage = () => {
     refreshTasks();
   }, [selectedDate]);
 
-  useEffect(() => {
-    setCalendarMonthDate(
-      new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
-    );
-  }, [selectedDate]);
-
   const handleCardClick = (taskId: number) => {
     setSelectedTaskId(taskId);
     setActiveSubject(null);

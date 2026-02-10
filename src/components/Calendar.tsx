@@ -58,6 +58,10 @@ const TitleButton = styled.button<{ $clickable: boolean }>`
 
   cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
 
+  &:hover {
+    color: ${({ $clickable }) =>
+      $clickable ? "var(--color-primary-500)" : "var(--color-black)"};
+  }
   &:active {
     transform: ${({ $clickable }) => ($clickable ? "translateY(1px)" : "none")};
   }
@@ -304,7 +308,6 @@ const Calendar = ({
           onClick={() => {
             if (viewMode === "month") setIsPickerOpen(true);
           }}
-          aria-label="년/월 선택"
         >
           {headerTitle}
         </TitleButton>
@@ -349,6 +352,9 @@ const Calendar = ({
             monthDate={monthDate}
             remainingCountByDate={remainingCountByDate}
             onSelectDate={handleSelectDateInMonth}
+            onChangeMonth={(nextMonth) => {
+              onChangeMonthDate(nextMonth);
+            }}
           />
         )}
       </CalendarContainer>
