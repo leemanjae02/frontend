@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchTaskDetail } from "../api/task";
-import { fetchProofShots, getFileUrl } from "../api/file";
 import type { TaskDetailData } from "../components/mentee/TaskDetailContent";
 
 export interface UseTaskDetailReturn {
@@ -22,22 +21,8 @@ export const useTaskDetail = (taskId: number | null): UseTaskDetailReturn => {
 
     setIsLoading(true);
     try {
-      const [detailResult, proofShotResult] = await Promise.all([
-        fetchTaskDetail(taskId),
-        fetchProofShots(taskId).catch(() => null),
-      ]);
-
-      let proofShotUrls: string[] = [];
-      if (proofShotResult && proofShotResult.proofShots) {
-        proofShotUrls = await Promise.all(
-          proofShotResult.proofShots.map((ps) => getFileUrl(ps.imageFileId)),
-        );
-      }
-
-      setData({
-        ...detailResult,
-        proofShots: proofShotUrls,
-      });
+      const result = await fetchTaskDetail(taskId);
+      setData(result);
     } catch (err) {
       setError(err as Error);
     } finally {

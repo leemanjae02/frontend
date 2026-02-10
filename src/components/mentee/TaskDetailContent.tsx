@@ -23,7 +23,6 @@ export interface TaskDetailData {
   isMentorAssigned: boolean;
   hasFeedback: boolean;
   attachments?: AttachmentData[];
-  proofShots?: string[];
   mentorFeedback?: {
     mentorName: string;
     content: string;
@@ -95,24 +94,6 @@ const ResourceList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-`;
-
-const PhotoPreviewList = styled.div`
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 0;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-`;
-
-const PreviewImage = styled.img`
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid var(--color-gray-100);
 `;
 
 const InfoList = styled.div`
@@ -238,24 +219,11 @@ const TaskDetailContent: React.FC<TaskDetailProps> = ({
       {/* 2. Resources */}
       <ResourceList>
         {shouldShowUpload && (
-          <>
-            {data.proofShots && data.proofShots.length > 0 && (
-              <PhotoPreviewList>
-                {data.proofShots.map((url, idx) => (
-                  <PreviewImage key={idx} src={url} alt={`preview-${idx}`} />
-                ))}
-              </PhotoPreviewList>
-            )}
-            <TaskAttachment
-              mode="UPLOAD_PHOTO"
-              title={
-                data.proofShots && data.proofShots.length > 0
-                  ? "사진 수정/추가하기"
-                  : "사진 업로드하기"
-              }
-              onOpenUpload={onOpenPhotoUpload}
-            />
-          </>
+          <TaskAttachment
+            mode="UPLOAD_PHOTO"
+            title="사진 업로드하기"
+            onOpenUpload={onOpenPhotoUpload}
+          />
         )}
 
         {data.attachments?.map((item, idx) => (
