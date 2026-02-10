@@ -121,17 +121,6 @@ const SubjectProgressPage = () => {
               subject={subject}
               done={task.completed}
               fromMentor={task.createdBy === "ROLE_MENTOR"}
-              hasFile={task.hasWorksheet}
-              hasPhoto={task.hasProofShot}
-              feedback={
-                task.hasFeedback
-                  ? task.readFeedback
-                    ? "READ"
-                    : "UNREAD"
-                  : "NONE"
-              }
-              onToggleDone={() => {}}
-              onClick={() => {}}
             />
           ))}
         </CardList>
@@ -152,15 +141,6 @@ const SubjectProgressPage = () => {
                 subject={subject}
                 done={task.completed}
                 fromMentor={task.createdBy === "ROLE_MENTOR"}
-                hasFile={task.hasWorksheet}
-                hasPhoto={task.hasProofShot}
-                feedback={
-                  task.hasFeedback
-                    ? task.readFeedback
-                      ? "READ"
-                      : "UNREAD"
-                    : "NONE"
-                }
               />
             ))}
           </CardList>
