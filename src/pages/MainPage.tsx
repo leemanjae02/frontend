@@ -27,7 +27,8 @@ import { dateUtils } from "../utils/dateUtils";
 import type { ImageMarkerData } from "../components/mentee/PhotoUploadOverlay";
 import type { DashboardSummaryData } from "../components/mentee/Dashboard";
 import FeedbackDetailOverlay from "../components/mentee/FeedbackDetailOverlay";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getNotifications } from "../api/alarm";
 
 const MobileScreen = styled.div`
   min-width: 375px;
@@ -130,7 +131,9 @@ interface FeedbackDetailInfo {
 
 const MainPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
+  const [hasUnread, setHasUnread] = useState(false);
   const [calendarViewMode, setCalendarViewMode] = useState<"week" | "month">(
     "week",
   );
@@ -431,9 +434,30 @@ const MainPage = () => {
     };
   }, [calendarViewMode, calendarMonthDate]);
 
+  const refreshHasUnread = async () => {
+    try {
+      const list = await getNotifications();
+      const has = list.some((n) => n.status !== "READ");
+      setHasUnread(has);
+    } catch (e) {
+      console.error("알림 상태 조회 실패", e);
+      setHasUnread(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshHasUnread();
+  }, [location.key]);
+
   return (
     <MobileScreen>
-      <Header />
+      <Header
+        hasUnread={hasUnread}
+        onClickLogo={() => {
+          // navigate("/")
+        }}
+        onClickBell={() => navigate("/alarm")}
+      />
 
       <CalendarAndTodoWrapper $mode={calendarViewMode}>
         <Calendar
