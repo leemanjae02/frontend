@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosInstance";
-import type { SubjectKey } from "../components/SubjectAddButton";
+import type { SubjectKey, SubjectKey1 } from "../components/SubjectAddButton";
 
 export interface ResourceWorksheet {
   fileId: number;
@@ -13,7 +13,7 @@ export interface ResourceColumnLink {
 
 export interface ResourceItem {
   resourceId: number;
-  subject: SubjectKey;
+  subject: SubjectKey1;
   resourceName: string;
   registeredDate: string;
   worksheets: ResourceWorksheet[];
@@ -24,7 +24,7 @@ export type GetResourcesResponse = ResourceItem[];
 
 export interface CreateResourceRequest {
   menteeId: number;
-  subject: SubjectKey;
+  subject: SubjectKey1;
   resourceName: string;
   fileId?: number;
   columnLink?: string;
@@ -40,7 +40,7 @@ export interface CreateResourceResponse {
 }
 
 export interface UpdateResourceRequest {
-  subject: SubjectKey;
+  subject: SubjectKey1;
   resourceName: string;
   fileId?: number;
   columnLink?: string;

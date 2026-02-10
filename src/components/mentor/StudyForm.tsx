@@ -6,7 +6,7 @@ import UploadIcon from "../../assets/images/icon/upload.svg?react";
 import PencilIcon from "../../assets/images/icon/pen.svg?react";
 import InfoIcon from "../../assets/images/icon/info.svg?react";
 
-import type { SubjectKey } from "../SubjectAddButton";
+import type { SubjectKey1 } from "../SubjectAddButton";
 import SubjectSelectButton from "../SubjectSelectButton";
 import ToggleSwitch from "../ToggleSwitch";
 import Input from "../Input";
@@ -22,14 +22,14 @@ type ResourceMode = "EMPTY" | "CHOICE" | "FILE" | "LINK";
 type Mode = "todo" | "resource";
 
 export interface StudyFormResourcePayload {
-  subject: SubjectKey;
+  subject: SubjectKey1;
   resourceName: string;
   fileId?: number;
   columnLink?: string;
 }
 
 export interface StudyFormTodoPayload {
-  subject: SubjectKey;
+  subject: SubjectKey1;
   dates: string[];
   taskNames: string[];
   goalMinutes: number;
@@ -50,7 +50,7 @@ interface Props {
   showGoalMinutes?: boolean;
   showTaskList?: boolean;
 
-  initialSubject?: SubjectKey;
+  initialSubject?: SubjectKey1;
   initialResourceTitle?: string;
   initialResourceMode?: ResourceMode;
   initialFileId?: number | null;
@@ -84,7 +84,7 @@ const StudyForm = ({
   initialTaskNames,
   initialGoalMinutes,
 }: Props) => {
-  const [subject, setSubject] = useState<SubjectKey>("KOREAN");
+  const [subject, setSubject] = useState<SubjectKey1>("KOREAN");
   // 날짜
   const [usePeriod, setUsePeriod] = useState(false);
   const [dates, setDates] = useState<string[]>([]);
@@ -133,8 +133,10 @@ const StudyForm = ({
 
     // Todo 모드 초기값 세팅
     if (initialDates && initialDates.length > 0) setDates(initialDates);
-    if (initialTaskNames && initialTaskNames.length > 0) setTaskNames(initialTaskNames);
-    if (initialGoalMinutes !== undefined) setGoalMinutes(String(initialGoalMinutes));
+    if (initialTaskNames && initialTaskNames.length > 0)
+      setTaskNames(initialTaskNames);
+    if (initialGoalMinutes !== undefined)
+      setGoalMinutes(String(initialGoalMinutes));
 
     setDidInit(true);
   }, [
@@ -437,7 +439,10 @@ const StudyForm = ({
 
               {!isEdit && (
                 <AddBtn>
-                  <Button onClick={addTaskName} disabled={!taskNameInput.trim()}>
+                  <Button
+                    onClick={addTaskName}
+                    disabled={!taskNameInput.trim()}
+                  >
                     추가
                   </Button>
                 </AddBtn>
@@ -483,7 +488,9 @@ const StudyForm = ({
                       />
                     </AddedInputWrap>
 
-                    {!isEdit && <ButtonMinus onClick={() => removeTaskName(idx)} />}
+                    {!isEdit && (
+                      <ButtonMinus onClick={() => removeTaskName(idx)} />
+                    )}
                   </AddedItem>
                 ))}
               </AddedList>

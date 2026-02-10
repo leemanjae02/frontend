@@ -1,24 +1,27 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import { typography } from "../styles/typography";
 
-type DateKey = `${number}-${string}-${string}`; // "YYYY-MM-DD"
+type DateKey = `${number}-${string}-${string}`;
 
 type Props = {
   selectedDate: Date;
   monthDate?: Date;
 
   onSelectDate: (next: Date) => void;
+
   onChangeMonth?: (nextMonthDate: Date) => void;
 
   remainingCountByDate?: Record<DateKey, number>;
-
   weekLabels?: string[];
 
   className?: string;
 };
 
 const WEEK_DEFAULT = ["월", "화", "수", "목", "금", "토", "일"];
+
+const SWIPE_THRESHOLD_PX = 50;
+const SWIPE_START_PX = 10;
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -33,6 +36,10 @@ function toKey(d: Date): DateKey {
 
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function addMonths(d: Date, delta: number) {
+  return new Date(d.getFullYear(), d.getMonth() + delta, 1);
 }
 
 function daysInMonth(d: Date) {
@@ -51,6 +58,7 @@ export default function MonthlyCalendar({
   selectedDate,
   monthDate,
   onSelectDate,
+  onChangeMonth,
   remainingCountByDate = {},
   weekLabels = WEEK_DEFAULT,
   className,
@@ -80,6 +88,7 @@ export default function MonthlyCalendar({
     return Array.from({ length: gridSize }).map((_, i) => {
       const d = new Date(gridStart);
       d.setDate(gridStart.getDate() + i);
+
       const inMonth =
         d.getFullYear() === baseMonth.getFullYear() &&
         d.getMonth() === baseMonth.getMonth();
@@ -109,8 +118,102 @@ export default function MonthlyCalendar({
     return result;
   }, [days]);
 
+  const canSwipe = Boolean(onChangeMonth);
+
+  const startRef = useRef<{ x: number; y: number } | null>(null);
+  const decidedRef = useRef<null | "H" | "V">(null);
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  const commitMonthChange = (direction: "prev" | "next") => {
+    if (!onChangeMonth) return;
+    const next = addMonths(baseMonth, direction === "next" ? 1 : -1);
+    onChangeMonth(next);
+  };
+
+  const begin = (x: number, y: number) => {
+    if (!canSwipe) return;
+    startRef.current = { x, y };
+    decidedRef.current = null;
+    setIsSwiping(false);
+  };
+
+  const move = (x: number, y: number, preventDefault?: () => void) => {
+    if (!canSwipe) return;
+    if (!startRef.current) return;
+
+    const dx = x - startRef.current.x;
+    const dy = y - startRef.current.y;
+
+    // 아직 방향 결정을 안 했으면 판단
+    if (!decidedRef.current) {
+      if (Math.abs(dx) < SWIPE_START_PX && Math.abs(dy) < SWIPE_START_PX)
+        return;
+
+      decidedRef.current = Math.abs(dx) > Math.abs(dy) ? "H" : "V";
+      if (decidedRef.current === "H") setIsSwiping(true);
+    }
+
+    // 가로 스와이프라고 결정되면 스크롤에 이벤트 뺏기지 않게 막기
+    if (decidedRef.current === "H") {
+      preventDefault?.();
+    }
+  };
+
+  const end = (x: number, y: number) => {
+    if (!canSwipe) return;
+    if (!startRef.current) return;
+
+    const dx = x - startRef.current.x;
+    const dy = y - startRef.current.y;
+
+    // 세로 스크롤로 결정된 경우는 아무것도 하지 않음
+    if (decidedRef.current === "V" || Math.abs(dy) > Math.abs(dx)) {
+      startRef.current = null;
+      decidedRef.current = null;
+      setIsSwiping(false);
+      return;
+    }
+
+    // 임계치 넘으면 달 변경
+    if (dx <= -SWIPE_THRESHOLD_PX) commitMonthChange("next");
+    else if (dx >= SWIPE_THRESHOLD_PX) commitMonthChange("prev");
+
+    startRef.current = null;
+    decidedRef.current = null;
+    setIsSwiping(false);
+  };
+
   return (
     <Wrap className={className}>
+      <SwipeLayer
+        $swiping={isSwiping}
+        onMouseDown={(e) => begin(e.clientX, e.clientY)}
+        onMouseMove={(e) => {
+          if (!startRef.current) return;
+          move(e.clientX, e.clientY);
+          // 드래그 중 텍스트 선택 방지
+          if (decidedRef.current === "H") e.preventDefault();
+        }}
+        onMouseUp={(e) => end(e.clientX, e.clientY)}
+        onMouseLeave={(e) => {
+          if (!startRef.current) return;
+          end(e.clientX, e.clientY);
+        }}
+        // touch
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          begin(t.clientX, t.clientY);
+        }}
+        onTouchMove={(e) => {
+          const t = e.touches[0];
+          move(t.clientX, t.clientY, () => e.preventDefault());
+        }}
+        onTouchEnd={(e) => {
+          const t = e.changedTouches[0];
+          if (!t) return;
+          end(t.clientX, t.clientY);
+        }}
+      />
       <WeekHeaderRow>
         {weekLabels.map((w) => (
           <WeekHeaderCell key={w}>{w}</WeekHeaderCell>
@@ -125,7 +228,10 @@ export default function MonthlyCalendar({
                 <DayButton
                   type="button"
                   $selected={selected}
-                  onClick={() => onSelectDate(new Date(d))}
+                  onClick={() => {
+                    if (isSwiping) return;
+                    onSelectDate(new Date(d));
+                  }}
                 >
                   <DayNumber
                     $inMonth={inMonth}
@@ -151,8 +257,29 @@ export default function MonthlyCalendar({
 }
 
 const Wrap = styled.div`
+  position: relative;
   width: 100%;
   background: var(--color-white);
+`;
+
+const SwipeLayer = styled.div<{ $swiping: boolean }>`
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+
+  touch-action: pan-y;
+
+  ${({ $swiping }) =>
+    $swiping
+      ? css`
+          cursor: grabbing;
+        `
+      : css`
+          cursor: grab;
+        `}
+
+  -webkit-user-select: none;
+  user-select: none;
 `;
 
 const WeekHeaderRow = styled.div`
@@ -199,10 +326,14 @@ const DayButton = styled.button<{
   display: grid;
   place-items: center;
   cursor: pointer;
+  position: relative;
+  z-index: 6;
 
   &:active {
     transform: scale(0.98);
   }
+
+  -webkit-tap-highlight-color: transparent;
 `;
 
 const DayNumber = styled.span<{

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 import TodoDetailHeader from "./TodoDetailHeader";
@@ -14,7 +14,6 @@ import {
   type TaskFeedbackDetailData,
   type TaskFeedbackItem,
 } from "../../api/task";
-import { createPortal } from "react-dom";
 import { getFileUrl } from "../../api/file";
 
 interface BadgeVM {
@@ -171,6 +170,13 @@ const FeedbackDetailOverlay = ({
 
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const [isDragging, setIsDragging] = useState(false);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -210,6 +216,17 @@ const FeedbackDetailOverlay = ({
     };
   }, [isOpen, taskId]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!data) return;
+
+    // 이미지 없을 수도 있으니 안전하게
+    if (carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0, behavior: "auto" });
+    }
+    setActivePhotoIndex(0);
+  }, [isOpen, data]);
+
   const hasPhotos = (data?.photos?.filter(Boolean).length ?? 0) > 0;
 
   const shouldShowOverall = hasPhotos ? activePhotoIndex === 0 : true;
@@ -236,9 +253,79 @@ const FeedbackDetailOverlay = ({
   const shouldShowPhotoFeedback =
     hasPhotos && (activePhotoFeedbackSection?.items?.length ?? 0) > 0;
 
+  const handleScroll = () => {
+    if (!carouselRef.current) return;
+    const scrollLeftVal = carouselRef.current.scrollLeft;
+    const width = carouselRef.current.offsetWidth;
+    const newIndex = Math.round(scrollLeftVal / width);
+    setActivePhotoIndex(newIndex);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!carouselRef.current) return;
+
+    isDown.current = true;
+    setIsDragging(true);
+
+    startX.current = e.pageX - carouselRef.current.offsetLeft;
+    scrollLeft.current = carouselRef.current.scrollLeft;
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDown.current || !carouselRef.current) return;
+    e.preventDefault();
+
+    const x = e.pageX - carouselRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    carouselRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!carouselRef.current) return;
+
+    isDown.current = true;
+    setIsDragging(true);
+
+    startX.current = e.touches[0].pageX - carouselRef.current.offsetLeft;
+    scrollLeft.current = carouselRef.current.scrollLeft;
+  };
+
+  const handleTouchEnd = () => {
+    isDown.current = false;
+    setIsDragging(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDown.current || !carouselRef.current) return;
+
+    const x = e.touches[0].pageX - carouselRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    carouselRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleIndicatorChange = (index: number) => {
+    if (!carouselRef.current) return;
+    const width = carouselRef.current.offsetWidth;
+
+    carouselRef.current.scrollTo({
+      left: width * index,
+      behavior: "smooth",
+    });
+  };
+
   if (!isOpen) return null;
 
-  return createPortal(
+  return (
     <Container $isOpen={isOpen}>
       <TodoDetailHeader
         title={title || data?.todoTitle || ""}
@@ -254,28 +341,52 @@ const FeedbackDetailOverlay = ({
           <>
             {hasPhotos ? (
               <PhotoArea>
-                <PhotoFrame>
-                  {data.photos[activePhotoIndex] ? (
-                    <Photo src={data.photos[activePhotoIndex]} alt="" />
-                  ) : (
-                    <StateText>이미지를 불러오지 못했습니다.</StateText>
-                  )}
+                <CarouselContainer
+                  ref={carouselRef}
+                  $isDragging={isDragging}
+                  onScroll={handleScroll}
+                  onMouseDown={handleMouseDown}
+                  onMouseLeave={handleMouseLeave}
+                  onMouseUp={handleMouseUp}
+                  onMouseMove={handleMouseMove}
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchMove}
+                >
+                  {data.photos.map((src, idx) => (
+                    <ImageSlide key={idx}>
+                      <ImageWrapper>
+                        {src ? (
+                          <Photo src={src} alt="" draggable={false} />
+                        ) : (
+                          <StateText>이미지를 불러오지 못했습니다.</StateText>
+                        )}
 
-                  {activeBadges.map((b) => (
-                    <BadgeSpot
-                      key={b.id}
-                      style={{ left: `${b.x * 100}%`, top: `${b.y * 100}%` }}
-                    >
-                      <NumberBadge value={b.value} variant={b.variant} />
-                    </BadgeSpot>
+                        {idx === activePhotoIndex &&
+                          activeBadges.map((b) => (
+                            <BadgeSpot
+                              key={b.id}
+                              style={{
+                                left: `${b.x * 100}%`,
+                                top: `${b.y * 100}%`,
+                              }}
+                            >
+                              <NumberBadge
+                                value={b.value}
+                                variant={b.variant}
+                              />
+                            </BadgeSpot>
+                          ))}
+                      </ImageWrapper>
+                    </ImageSlide>
                   ))}
-                </PhotoFrame>
+                </CarouselContainer>
 
                 <IndicatorWrap>
                   <Indicator
                     count={data.photos.length}
                     activeIndex={activePhotoIndex}
-                    onChange={(next) => setActivePhotoIndex(next)}
+                    onChange={handleIndicatorChange}
                   />
                 </IndicatorWrap>
               </PhotoArea>
@@ -316,13 +427,12 @@ const FeedbackDetailOverlay = ({
           </>
         ) : null}
       </Body>
-    </Container>,
-    document.body,
+    </Container>
   );
 };
 
 const Container = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -336,8 +446,6 @@ const Container = styled.div<{ $isOpen: boolean }>`
   transform: ${({ $isOpen }) =>
     $isOpen ? "translateY(0)" : "translateY(100%)"};
   transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-
-  pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
 `;
 
 const Body = styled.main`
@@ -361,7 +469,30 @@ const PhotoArea = styled.section`
   padding: 16px;
 `;
 
-const PhotoFrame = styled.div`
+const CarouselContainer = styled.div<{ $isDragging: boolean }>`
+  width: 100%;
+  overflow-x: auto;
+  display: flex;
+
+  scroll-snap-type: ${({ $isDragging }) =>
+    $isDragging ? "none" : "x mandatory"};
+
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  cursor: ${({ $isDragging }) => ($isDragging ? "grabbing" : "grab")};
+`;
+
+const ImageSlide = styled.div`
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: center;
+`;
+
+const ImageWrapper = styled.div`
   position: relative;
   width: 100%;
   overflow: hidden;
@@ -372,6 +503,11 @@ const Photo = styled.img`
   width: 100%;
   height: auto;
   display: block;
+
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 `;
 
 const BadgeSpot = styled.div`

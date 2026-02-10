@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { typography } from "../styles/typography";
 import plus from "../assets/images/icon/plus-1.svg";
 
+export type SubjectKey1 = "KOREAN" | "ENGLISH" | "MATH" | "RESOURCE";
 export type SubjectKey = "KOREAN" | "ENGLISH" | "MATH";
 
 interface Props {
@@ -11,10 +12,11 @@ interface Props {
   className?: string;
 }
 
-const SUBJECT_CONFIG: Record<SubjectKey, { label: string; color: string }> = {
+const SUBJECT_CONFIG: Record<SubjectKey1, { label: string; color: string }> = {
   KOREAN: { label: "국어", color: "var(--color-orange-500)" },
   ENGLISH: { label: "영어", color: "var(--color-pink-500)" },
   MATH: { label: "수학", color: "var(--color-blue-500)" },
+  RESOURCE: { label: "자료", color: "var(--color-gray-500)" },
 };
 
 const SubjectAddButton = ({
