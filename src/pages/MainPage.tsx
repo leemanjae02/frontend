@@ -27,6 +27,7 @@ import { dateUtils } from "../utils/dateUtils";
 import type { ImageMarkerData } from "../components/mentee/PhotoUploadOverlay";
 import type { DashboardSummaryData } from "../components/mentee/Dashboard";
 import FeedbackDetailOverlay from "../components/mentee/FeedbackDetailOverlay";
+import { useNavigate } from "react-router-dom";
 
 const MobileScreen = styled.div`
   min-width: 375px;
@@ -41,11 +42,22 @@ const MobileScreen = styled.div`
   overflow: hidden;
 `;
 
+const CalendarAndTodoWrapper = styled.div<{ $mode: "week" | "month" }>`
+  display: flex;
+  flex-direction: column;
+
+  flex: 1;
+  min-height: 0;
+
+  /* 주간일 때만 간격 유지 */
+  gap: ${({ $mode }) => ($mode === "week" ? "16px" : "0")};
+`;
+
 const DashboardWrapper = styled.div`
   width: 100%;
-  height: 150px;
+  height: 135px;
   box-sizing: border-box;
-  padding: 18px 16px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--color-gray-100);
 `;
 
@@ -54,6 +66,7 @@ const TodoSectionWrapper = styled.div<{ $lock: boolean }>`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 
   ${({ $lock }) => ($lock ? "pointer-events: none;" : "")}
 `;
@@ -70,7 +83,7 @@ const ToggleSwitchWrapper = styled.div`
 `;
 
 const ToggleSwitchLabel = styled.p`
-  ${typography.t16m}
+  ${typography.t16sb}
   color: var(--color-gray-500);
   margin-right: 8px;
 
@@ -84,6 +97,9 @@ const ToggleSwitchLabel = styled.p`
 
 const SubjectListWrapper = styled.div<{ $lock: boolean }>`
   flex: 1;
+
+  min-height: 0;
+
   overflow-y: ${({ $lock }) => ($lock ? "hidden" : "auto")};
   padding: 8px 16px;
   box-sizing: border-box;
@@ -113,6 +129,8 @@ interface FeedbackDetailInfo {
 }
 
 const MainPage = () => {
+  const navigate = useNavigate();
+
   const [calendarViewMode, setCalendarViewMode] = useState<"week" | "month">(
     "week",
   );
@@ -416,81 +434,84 @@ const MainPage = () => {
   return (
     <MobileScreen>
       <Header />
-      <Calendar
-        selectedDate={selectedDate}
-        onDateClick={(d) => setSelectedDate(new Date(d))}
-        viewMode={calendarViewMode}
-        onChangeViewMode={setCalendarViewMode}
-        monthDate={calendarMonthDate}
-        onChangeMonthDate={setCalendarMonthDate}
-        remainingCountByDate={monthRemainingMap}
-      />
-      {calendarViewMode === "week" ? (
-        <DashboardWrapper>
-          <Dashboard
-            summary={dashboardSummary ?? undefined}
-            loading={isLoading}
-            onClickSubjectStats={() => console.log("과목별 통계 클릭")}
-          />
-        </DashboardWrapper>
-      ) : null}
-      <TodoSectionWrapper $lock={anyOverlayOpen}>
-        <ToggleSwitchWrapper>
-          <ToggleSwitchLabel>
-            {calendarViewMode === "month"
-              ? formatMonthDay(selectedDate)
-              : "오늘 할 일"}
-          </ToggleSwitchLabel>
-          <ToggleSwitchLabel>완료한 할 일 보기</ToggleSwitchLabel>
-          <ToggleSwitch on={isToggle} onChange={setIsToggle} />
-        </ToggleSwitchWrapper>
 
-        <SubjectListWrapper $lock={anyOverlayOpen}>
-          {SUBJECT_ORDER.map((subject) => {
-            const subjectTasks = tasks.filter(
-              (task) => task.taskSubject === subject,
-            );
-            const visibleTasks = isToggle
-              ? subjectTasks
-              : subjectTasks.filter((task) => !task.completed);
+      <CalendarAndTodoWrapper $mode={calendarViewMode}>
+        <Calendar
+          selectedDate={selectedDate}
+          onDateClick={(d) => setSelectedDate(new Date(d))}
+          viewMode={calendarViewMode}
+          onChangeViewMode={setCalendarViewMode}
+          monthDate={calendarMonthDate}
+          onChangeMonthDate={setCalendarMonthDate}
+          remainingCountByDate={monthRemainingMap}
+        />
+        {calendarViewMode === "week" ? (
+          <DashboardWrapper>
+            <Dashboard
+              summary={dashboardSummary ?? undefined}
+              loading={isLoading}
+              onClickSubjectStats={() => navigate("/mypage")}
+            />
+          </DashboardWrapper>
+        ) : null}
+        <TodoSectionWrapper $lock={anyOverlayOpen}>
+          <ToggleSwitchWrapper>
+            <ToggleSwitchLabel>
+              {calendarViewMode === "month"
+                ? formatMonthDay(selectedDate)
+                : "오늘 할 일"}
+            </ToggleSwitchLabel>
+            <ToggleSwitchLabel>완료한 할 일 보기</ToggleSwitchLabel>
+            <ToggleSwitch on={isToggle} onChange={setIsToggle} />
+          </ToggleSwitchWrapper>
 
-            return (
-              <SubjectGroup key={subject}>
-                <SubjectAddButton
-                  subject={subject as SubjectKey}
-                  onClick={() => handleAddButtonClick(subject)}
-                />
-                {visibleTasks.map((task) => (
-                  <TodoCard
-                    key={task.taskId}
-                    title={task.taskName}
+          <SubjectListWrapper $lock={anyOverlayOpen}>
+            {SUBJECT_ORDER.map((subject) => {
+              const subjectTasks = tasks.filter(
+                (task) => task.taskSubject === subject,
+              );
+              const visibleTasks = isToggle
+                ? subjectTasks
+                : subjectTasks.filter((task) => !task.completed);
+
+              return (
+                <SubjectGroup key={subject}>
+                  <SubjectAddButton
                     subject={subject as SubjectKey}
-                    done={task.completed}
-                    fromMentor={task.createdBy === "ROLE_MENTOR"}
-                    hasFile={task.hasWorksheet}
-                    hasPhoto={task.hasProofShot}
-                    feedback={
-                      task.hasFeedback
-                        ? task.readFeedback
-                          ? "READ"
-                          : "UNREAD"
-                        : "NONE"
-                    }
-                    onToggleDone={() =>
-                      handleToggleDone(
-                        task.taskId,
-                        task.taskName,
-                        task.completed,
-                      )
-                    }
-                    onClick={() => handleCardClick(task.taskId)}
+                    onClick={() => handleAddButtonClick(subject)}
                   />
-                ))}
-              </SubjectGroup>
-            );
-          })}
-        </SubjectListWrapper>
-      </TodoSectionWrapper>
+                  {visibleTasks.map((task) => (
+                    <TodoCard
+                      key={task.taskId}
+                      title={task.taskName}
+                      subject={subject as SubjectKey}
+                      done={task.completed}
+                      fromMentor={task.createdBy === "ROLE_MENTOR"}
+                      hasFile={task.hasWorksheet}
+                      hasPhoto={task.hasProofShot}
+                      feedback={
+                        task.hasFeedback
+                          ? task.readFeedback
+                            ? "READ"
+                            : "UNREAD"
+                          : "NONE"
+                      }
+                      onToggleDone={() =>
+                        handleToggleDone(
+                          task.taskId,
+                          task.taskName,
+                          task.completed,
+                        )
+                      }
+                      onClick={() => handleCardClick(task.taskId)}
+                    />
+                  ))}
+                </SubjectGroup>
+              );
+            })}
+          </SubjectListWrapper>
+        </TodoSectionWrapper>
+      </CalendarAndTodoWrapper>
 
       {isBottomSheetOpen ? (
         <BottomSheet isOpen={isBottomSheetOpen} onClose={closeSheet}>

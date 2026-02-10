@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
+import { typography } from "../styles/typography";
 
 type DateKey = `${number}-${string}-${string}`; // "YYYY-MM-DD"
 
@@ -33,6 +34,11 @@ function toKey(d: Date): DateKey {
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
+
+function daysInMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+
 function isSameDay(a: Date, b: Date) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -54,8 +60,15 @@ export default function MonthlyCalendar({
   const today = useMemo(() => new Date(), []);
   const monthStart = useMemo(() => startOfMonth(baseMonth), [baseMonth]);
 
-  const firstDay = monthStart.getDay(); // 일0~토6
-  const firstDayMonBased = (firstDay + 6) % 7; // 월0~일6
+  const firstDay = monthStart.getDay();
+  const firstDayMonBased = (firstDay + 6) % 7;
+
+  // 이 달이 6주가 필요한 지
+  const gridSize = useMemo(() => {
+    const totalCells = firstDayMonBased + daysInMonth(baseMonth);
+    const weeks = Math.ceil(totalCells / 7);
+    return weeks === 6 ? 42 : 35;
+  }, [firstDayMonBased, baseMonth]);
 
   const gridStart = useMemo(() => {
     const d = new Date(monthStart);
@@ -64,7 +77,7 @@ export default function MonthlyCalendar({
   }, [monthStart, firstDayMonBased]);
 
   const days = useMemo(() => {
-    return Array.from({ length: 42 }).map((_, i) => {
+    return Array.from({ length: gridSize }).map((_, i) => {
       const d = new Date(gridStart);
       d.setDate(gridStart.getDate() + i);
       const inMonth =
@@ -79,45 +92,60 @@ export default function MonthlyCalendar({
 
       return { d, inMonth, key, remain, selected, isToday };
     });
-  }, [gridStart, baseMonth, remainingCountByDate, selectedDate, today]);
+  }, [
+    gridStart,
+    baseMonth,
+    remainingCountByDate,
+    selectedDate,
+    today,
+    gridSize,
+  ]);
+
+  const weeks = useMemo(() => {
+    const result: Array<typeof days> = [];
+    for (let i = 0; i < days.length; i += 7) {
+      result.push(days.slice(i, i + 7));
+    }
+    return result;
+  }, [days]);
 
   return (
     <Wrap className={className}>
-      <WeekRow>
+      <WeekHeaderRow>
         {weekLabels.map((w) => (
-          <WeekCell key={w}>{w}</WeekCell>
+          <WeekHeaderCell key={w}>{w}</WeekHeaderCell>
         ))}
-      </WeekRow>
+      </WeekHeaderRow>
 
-      <Grid>
-        {days.map(({ d, inMonth, key, remain, selected, isToday }) => {
-          const dayNum = d.getDate();
-
-          return (
-            <DayCell key={key}>
-              <DayButton
-                type="button"
-                $selected={selected}
-                onClick={() => onSelectDate(new Date(d))}
-              >
-                <DayNumber
-                  $inMonth={inMonth}
+      <Weeks>
+        {weeks.map((week, weekIdx) => (
+          <WeekLineRow key={weekIdx}>
+            {week.map(({ d, inMonth, key, remain, selected, isToday }) => (
+              <DayCell key={key}>
+                <DayButton
+                  type="button"
                   $selected={selected}
-                  $today={isToday}
+                  onClick={() => onSelectDate(new Date(d))}
                 >
-                  {dayNum}
-                </DayNumber>
-              </DayButton>
+                  <DayNumber
+                    $inMonth={inMonth}
+                    $selected={selected}
+                    $today={isToday}
+                  >
+                    {d.getDate()}
+                  </DayNumber>
+                </DayButton>
 
-              {remain > 0 ? (
-                <RemainText>{remain}</RemainText>
-              ) : (
-                <RemainSpacer />
-              )}
-            </DayCell>
-          );
-        })}
-      </Grid>
+                {remain > 0 ? (
+                  <RemainText>{remain}</RemainText>
+                ) : (
+                  <RemainSpacer />
+                )}
+              </DayCell>
+            ))}
+          </WeekLineRow>
+        ))}
+      </Weeks>
     </Wrap>
   );
 }
@@ -127,23 +155,30 @@ const Wrap = styled.div`
   background: var(--color-white);
 `;
 
-const WeekRow = styled.div`
+const WeekHeaderRow = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--color-gray-100);
+  padding: 8px;
 `;
 
-const WeekCell = styled.div`
+const WeekHeaderCell = styled.div`
   text-align: center;
   font-size: 12px;
   color: var(--color-gray-400);
 `;
 
-const Grid = styled.div`
+const Weeks = styled.div`
+  padding: 0 8px;
+`;
+
+const WeekLineRow = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  row-gap: 8px;
-  padding: 0 8px 0;
+
+  padding: 8px 0;
+
+  border-bottom: 1px solid var(--color-gray-100);
 `;
 
 const DayCell = styled.div`
@@ -155,8 +190,8 @@ const DayCell = styled.div`
 const DayButton = styled.button<{
   $selected: boolean;
 }>`
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border: 0;
   border-radius: 999px;
   background: ${({ $selected }) =>
@@ -175,8 +210,14 @@ const DayNumber = styled.span<{
   $selected: boolean;
   $today: boolean;
 }>`
-  font-size: 14px;
-  font-weight: 600;
+  ${({ $today }) =>
+    $today
+      ? css`
+          ${typography.t14sb}
+        `
+      : css`
+          ${typography.t14r}
+        `}
   color: ${({ $inMonth, $selected, $today }) => {
     if ($selected) return "var(--color-white)";
     if ($today) return "var(--color-primary-500)";
@@ -185,13 +226,11 @@ const DayNumber = styled.span<{
 `;
 
 const RemainText = styled.div`
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-primary-500);
-  line-height: 1;
+  padding-top: 3px;
+  ${typography.t12sb}
+  color: var(--color-primary-300);
 `;
 
 const RemainSpacer = styled.div`
-  height: 16px;
+  height: 18px;
 `;

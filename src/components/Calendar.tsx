@@ -65,7 +65,7 @@ const TitleButton = styled.button<{ $clickable: boolean }>`
 
 const CalendarContainer = styled.div<{ $mode: "week" | "month" }>`
   overflow: hidden;
-  height: ${({ $mode }) => ($mode === "week" ? "57px" : "auto")};
+  height: ${({ $mode }) => ($mode === "week" ? "57px" : "")};
   transition: height 0.3s ease;
 `;
 

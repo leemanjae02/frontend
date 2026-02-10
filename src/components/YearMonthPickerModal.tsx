@@ -72,11 +72,12 @@ const YearMonthPickerModal = ({
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20000;
+  z-index: 1000;
 `;
 
 const ModalCard = styled.div`
