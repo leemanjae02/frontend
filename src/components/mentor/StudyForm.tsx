@@ -6,7 +6,7 @@ import UploadIcon from "../../assets/images/icon/upload.svg?react";
 import PencilIcon from "../../assets/images/icon/pen.svg?react";
 import InfoIcon from "../../assets/images/icon/info.svg?react";
 
-import type { SubjectKey, SubjectKey1 } from "../SubjectAddButton";
+import type { SubjectKey1 } from "../SubjectAddButton";
 import SubjectSelectButton from "../SubjectSelectButton";
 import ToggleSwitch from "../ToggleSwitch";
 import Input from "../Input";
