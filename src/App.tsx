@@ -80,9 +80,9 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/mypage" element={<MyPage />} />
-        <Route path="/mypage/:subject" element={<SubjectProgressPage />} />
-        <Route path="/alarm" element={<NotificationPage />} />
+        <Route path="mypage" element={<MyPage />} />
+        <Route path="mypage/:subject" element={<SubjectProgressPage />} />
+        <Route path="alarm" element={<NotificationPage />} />
         {/* 4. 그 외 없는 페이지 처리 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
