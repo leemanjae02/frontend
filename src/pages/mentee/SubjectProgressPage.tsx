@@ -54,9 +54,9 @@ const SubjectProgressPage = () => {
 
         const filtered = res.tasks.filter((t) => {
           if (subject === "RESOURCE") {
-            return t.isResource;
+            return t.resource;
           }
-          return t.taskSubject === subject && !t.isResource;
+          return t.taskSubject === subject && !t.resource;
         });
         setTodayTasks(filtered);
       } catch (e) {

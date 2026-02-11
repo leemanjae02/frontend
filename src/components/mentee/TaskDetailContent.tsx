@@ -43,6 +43,7 @@ const SUBJECT_COLORS: Record<SubjectKey, string> = {
   KOREAN: "var(--color-orange-500)",
   ENGLISH: "var(--color-pink-500)",
   MATH: "var(--color-blue-500)",
+  RESOURCE: "var(--color-gray-600)",
 };
 
 const Container = styled.div`

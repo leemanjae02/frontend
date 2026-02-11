@@ -15,6 +15,10 @@ const SUBJECT_CONFIG: Record<SubjectKey, { label: string; bg: string }> = {
     label: "수학",
     bg: "var(--color-blue-500)",
   },
+  RESOURCE: {
+    label: "자료",
+    bg: "var(--color-gray-600)",
+  },
 };
 
 interface Props {

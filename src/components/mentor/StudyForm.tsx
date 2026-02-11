@@ -6,7 +6,7 @@ import UploadIcon from "../../assets/images/icon/upload.svg?react";
 import PencilIcon from "../../assets/images/icon/pen.svg?react";
 import InfoIcon from "../../assets/images/icon/info.svg?react";
 
-import type { SubjectKey1 } from "../SubjectAddButton";
+import type { SubjectKey } from "../SubjectAddButton";
 import SubjectSelectButton from "../SubjectSelectButton";
 import ToggleSwitch from "../ToggleSwitch";
 import Input from "../Input";
@@ -22,14 +22,14 @@ type ResourceMode = "EMPTY" | "CHOICE" | "FILE" | "LINK";
 type Mode = "todo" | "resource";
 
 export interface StudyFormResourcePayload {
-  subject: SubjectKey1;
+  subject: SubjectKey;
   resourceName: string;
   fileId?: number;
   columnLink?: string;
 }
 
 export interface StudyFormTodoPayload {
-  subject: SubjectKey1;
+  subject: SubjectKey;
   dates: string[];
   taskNames: string[];
   goalMinutes: number;
@@ -50,7 +50,7 @@ interface Props {
   showGoalMinutes?: boolean;
   showTaskList?: boolean;
 
-  initialSubject?: SubjectKey1;
+  initialSubject?: SubjectKey;
   initialResourceTitle?: string;
   initialResourceMode?: ResourceMode;
   initialFileId?: number | null;
@@ -84,7 +84,9 @@ const StudyForm = ({
   initialTaskNames,
   initialGoalMinutes,
 }: Props) => {
-  const [subject, setSubject] = useState<SubjectKey1>("KOREAN");
+  const [subject, setSubject] = useState<SubjectKey>(
+    initialSubject || "KOREAN"
+  );
   // 날짜
   const [usePeriod, setUsePeriod] = useState(false);
   const [dates, setDates] = useState<string[]>([]);

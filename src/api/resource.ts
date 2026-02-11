@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosInstance";
-import type { SubjectKey, SubjectKey1 } from "../components/SubjectAddButton";
+import type { SubjectKey } from "../components/SubjectAddButton";
 
 export interface ResourceWorksheet {
   fileId: number;
@@ -13,7 +13,7 @@ export interface ResourceColumnLink {
 
 export interface ResourceItem {
   resourceId: number;
-  subject: SubjectKey1;
+  subject: SubjectKey;
   resourceName: string;
   registeredDate: string;
   worksheets: ResourceWorksheet[];
@@ -24,7 +24,7 @@ export type GetResourcesResponse = ResourceItem[];
 
 export interface CreateResourceRequest {
   menteeId: number;
-  subject: SubjectKey1;
+  subject: SubjectKey;
   resourceName: string;
   fileId?: number;
   columnLink?: string;
@@ -40,7 +40,7 @@ export interface CreateResourceResponse {
 }
 
 export interface UpdateResourceRequest {
-  subject: SubjectKey1;
+  subject: SubjectKey;
   resourceName: string;
   fileId?: number;
   columnLink?: string;
@@ -52,7 +52,7 @@ export type UpdateResourceResponse = ResourceItem;
  * 자료 목록 조회
  */
 export const getResources = async (
-  menteeId: number,
+  menteeId: number
 ): Promise<GetResourcesResponse> => {
   const { data } = await axiosInstance.get<GetResourcesResponse>("/resources", {
     params: { menteeId },
@@ -64,11 +64,11 @@ export const getResources = async (
  * 자료 등록
  */
 export const createResource = async (
-  payload: CreateResourceRequest,
+  payload: CreateResourceRequest
 ): Promise<CreateResourceResponse> => {
   const { data } = await axiosInstance.post<CreateResourceResponse>(
     "/resources",
-    payload,
+    payload
   );
   return data;
 };
@@ -77,13 +77,13 @@ export const createResource = async (
  * 자료 상세 조회
  */
 export const getResourceDetail = async (
-  resourceId: number,
+  resourceId: number
 ): Promise<ResourceItem> => {
   const { data } = await axiosInstance.get<ResourceItem>(
     `/resources/${resourceId}`,
     {
       params: { resourceId },
-    },
+    }
   );
   return data;
 };
@@ -93,11 +93,11 @@ export const getResourceDetail = async (
  */
 export const updateResource = async (
   resourceId: number,
-  payload: UpdateResourceRequest,
+  payload: UpdateResourceRequest
 ): Promise<UpdateResourceResponse> => {
   const { data } = await axiosInstance.put<UpdateResourceResponse>(
     `/resources/${resourceId}`,
-    payload,
+    payload
   );
   return data;
 };
